@@ -245,7 +245,9 @@ Números_de_paradas = namedtuple("Números_de_paradas",
                                  "Cajo2",
                                  "TQuevedo22",
 ##                                 "Albericia18",
-                                 "Pedro_S_Martin_8"))
+                                 "Pedro_S_Martin_8",
+                                 "ies_llamas",
+                                 "san_fernando_vuelta"))
 def genera_informe(
     fecha_inicio = None,
     fecha_fin = None,
@@ -259,7 +261,9 @@ def genera_informe(
                                             Cajo2=78,
                                             TQuevedo22=46,
 ##                                            390,
-                                            Pedro_S_Martin_8=436)):
+                                            Pedro_S_Martin_8=436,
+                                            ies_llamas=194,
+                                            san_fernando_vuelta=44)):
 
     (llegadas_sardinero,
      llegadas_valdecilla,
@@ -315,8 +319,8 @@ def genera_informe(
                "Coche, Viaje "
                "FROM `pasos_parada` "
                "WHERE Instante between '{0}' AND '{1}' "
-               "AND parada IN (11, 44) "
-               "AND linea IN (3,17))".format(fecha_inicio,
+               "AND (parada IN (11, 44) "
+               "AND linea IN (3,17)) or (parada in (171, 194) and linea in (8,9)))".format(fecha_inicio,
                                              fecha_fin),
                "SELECT * FROM pasos_utiles "
                "WHERE NOT EXISTS (SELECT * FROM viajes_directos "
