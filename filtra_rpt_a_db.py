@@ -7,8 +7,10 @@ import MySQLdb
 
 def slices(
     s,
-    args=(0, 31, 37, 45, 51, 75, 87, 92, 98, 177,196,201,203,205,-1),
-    wanted_columns = {1, 3, 5, 7, 9, 10, 11,12}
+    #args=(0, 31, 37, 45, 51, 75, 87, 92, 98, 177,196,201,203,205,-1),
+    #wanted_columns = {1, 3, 5, 7, 9, 10, 11,12}
+    args=(0, 24, 30, 36, 43,104,111, 119,138,143,150,152,-1),
+    wanted_columns = {1,2,3,4,5,7,9,10}
     ):
     try:
         for column in wanted_columns:
@@ -31,9 +33,9 @@ def filtra_excel(
         ("Linea",
          "Coche",
          "Parada",
+         "Nombre",
          "Viaje",
          "Instante",
-         "Nombre",
          "Psuben",
          "Fecha"
          )
@@ -50,16 +52,16 @@ def filtra_excel(
                 row[0] = int(row[0])
                 row[1] = int(row[1])
                 row[2] = int(row[2])
-                row[3] = int(row[3])
-                if row[4]== 'NULL':
+                row[3] = str(row[3])
+                row[4] = int(row[4])
+                if row[5]== 'NULL':
                     continue
-                row[4] = datetime.strptime(str(row[4]), "%Y-%m-%d %H:%M:%S")
-                row[5] = "No disponible" #str(row[6])
-                row[6] = 999
-                row[7] = datetime.strptime(str(row[4]), "%Y-%m-%d %H:%M:%S").replace(hour=0, minute=0, second=0)
+                row[5] = datetime.strptime(str(row[5]), "%Y-%m-%d %H:%M:%S")
+                row[6] =999 if row[6]== 'NULL' else  int(row[6]) 
+                row[7] = datetime.strptime(str(row[5]), "%Y-%m-%d %H:%M:%S").replace(hour=0, minute=0, second=0)
                 #insertamos en la bd
                 query_append.append("({},{},{},{},'{}','{}',{},'{}')".format(
-                        row[0],row[1],row[3],row[2],row[4],row[5],row[6],row[7]))
+                        row[0],row[1],row[4],row[2],row[5],row[3],row[6],row[7]))
                 
                 
                 hoja_salida.append(row)
@@ -87,6 +89,6 @@ def filtra_excel(
     print(c_rm)
 
 filtra_excel(
-    r"D:\Users\Andres\OneDrive\OneDrive - Universidad de Cantabria\Recordar GIST - VARIOS\datos_tus\13_14_15.rpt"
+    r"D:\Users\Andres\OneDrive\OneDrive - Universidad de Cantabria\Recordar GIST - VARIOS\datos_tus\11_a_15.rpt"
     )
 

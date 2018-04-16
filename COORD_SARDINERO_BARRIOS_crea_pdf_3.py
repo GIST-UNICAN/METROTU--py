@@ -439,33 +439,57 @@ def genera_informe(
                         #prematuramente.
                         salidas_sardinero[20].pop()
                     salidas_sardinero[20].append(instante)
-            elif linea==9:
-                if parada==números_de_paradas.Sardinero1:
-                    if (linea_anterior[cols.parada]
-                        ==números_de_paradas.Sardinero1
-                        and instante-salidas_sardinero[92][-1]
-                        < un_minuto):
-                        #Si vienen dos registros de Sard1 seguidos,
-                        #hay que quedarse con el primero como llegada de la 91,
-                        #y con el segundo como salida de la 92.
-                        salidas_sardinero[92].pop()
-                    else:
-                        llegadas_sardinero[91].append(instante)
-                    salidas_sardinero[92].append(instante)
+            elif linea==8:
+                if comprueba_llegada_sardinero1(8):
+                    llegadas_sardinero[8].append(instante)
                 elif parada==números_de_paradas.Sardinero2:
                     if (linea_anterior[cols.parada]
-                        ==números_de_paradas.Sardinero2
-                        and instante-salidas_sardinero[91][-1]
+                        == números_de_paradas.Sardinero2
+                        and instante-salidas_sardinero[8][-1]
                         < un_minuto):
-                        #Si vienen dos registros de Sard2 seguidos,
-                        #hay que quedarse con el primero como llegada de la 92,
-                        #y con el segundo como salida de la 91.
-                        #No ocurre en la pequeña muestra que he analizado, pero
-                        #no me cuesta mucho añadir la comprobación.
-                        salidas_sardinero[91].pop()
-                    else:
-                        llegadas_sardinero[92].append(instante)
-                    salidas_sardinero[91].append(instante)
+                        #Ya estaba registrada la salida, pero unos segundos
+                        #prematuramente.
+                        salidas_sardinero[8].pop()
+                    salidas_sardinero[8].append(instante)
+            elif linea==9:
+                if comprueba_llegada_sardinero1(9):
+                    llegadas_sardinero[9].append(instante)
+                elif parada==números_de_paradas.Sardinero2:
+                    if (linea_anterior[cols.parada]
+                        == números_de_paradas.Sardinero2
+                        and instante-salidas_sardinero[9][-1]
+                        < un_minuto):
+                        #Ya estaba registrada la salida, pero unos segundos
+                        #prematuramente.
+                        salidas_sardinero[9].pop()
+                    salidas_sardinero[9].append(instante)
+#            elif linea==9:
+#                if parada==números_de_paradas.Sardinero1:
+#                    if (linea_anterior[cols.parada]
+#                        ==números_de_paradas.Sardinero1
+#                        and instante-salidas_sardinero[92][-1]
+#                        < un_minuto):
+#                        #Si vienen dos registros de Sard1 seguidos,
+#                        #hay que quedarse con el primero como llegada de la 91,
+#                        #y con el segundo como salida de la 92.
+#                        salidas_sardinero[92].pop()
+#                    else:
+#                        llegadas_sardinero[91].append(instante)
+#                    salidas_sardinero[92].append(instante)
+#                elif parada==números_de_paradas.Sardinero2:
+#                    if (linea_anterior[cols.parada]
+#                        ==números_de_paradas.Sardinero2
+#                        and instante-salidas_sardinero[91][-1]
+#                        < un_minuto):
+#                        #Si vienen dos registros de Sard2 seguidos,
+#                        #hay que quedarse con el primero como llegada de la 92,
+#                        #y con el segundo como salida de la 91.
+#                        #No ocurre en la pequeña muestra que he analizado, pero
+#                        #no me cuesta mucho añadir la comprobación.
+#                        salidas_sardinero[91].pop()
+#                    else:
+#                        llegadas_sardinero[92].append(instante)
+#                    salidas_sardinero[91].append(instante)
             elif linea in (1,2,72):
                 if parada==números_de_paradas.Sardinero1:
                     salidas_sardinero['resto'].append(instante)
@@ -477,7 +501,7 @@ def genera_informe(
 ##    debug(pretty_output("salidas_sardinero", salidas_sardinero[100]))
 ##    debug(pretty_output("llegadas_valdecilla", llegadas_valdecilla[100]))
 ##    debug(pretty_output("salidas_valdecilla", salidas_valdecilla[100]))
-    lineas_acaban_sardinero = (92, 20) #(91, 92, 20)
+    lineas_acaban_sardinero = (9, 20, 8) #(91, 92, 20)
     lineas_acaban_valdecilla = (3, 13, 17)
 
 
@@ -551,15 +575,21 @@ def genera_informe(
 ##    debug(pretty_output('resultados["Barrios_Valdecilla"]',
 ##                        resultados["Barrios_Valdecilla"]))
             
-    salidas_sardinero[92]=filtra_llegadas(salidas_sardinero[92],
+    salidas_sardinero[9]=filtra_llegadas(salidas_sardinero[9],
                                           timedelta(minutes=1)) #Creo que ya
                                                                 #hace falta.
-    llegadas_sardinero[91]=filtra_llegadas(llegadas_sardinero[91],
+    llegadas_sardinero[9]=filtra_llegadas(llegadas_sardinero[9],
+                                           timedelta(minutes=1))
+    
+    llegadas_sardinero[8]=filtra_llegadas(llegadas_sardinero[8],
+                                           timedelta(minutes=1))
+    
+    llegadas_sardinero[8]=filtra_llegadas(llegadas_sardinero[8],
                                            timedelta(minutes=1))
     #juntamos las líneas 91 y 20 que van hacia monte porque estan "coordinadas"
-    salidas_sardinero[20] = sorted(chain(salidas_sardinero[91],
+    salidas_sardinero[20] = sorted(chain(salidas_sardinero[9],
                                          salidas_sardinero[20]))
-    llegadas_sardinero[20] = sorted(chain(llegadas_sardinero[91],
+    llegadas_sardinero[20] = sorted(chain(llegadas_sardinero[9],
                                           llegadas_sardinero[20]))
     llegadas_sardinero[100]=filtra_llegadas(llegadas_sardinero[100])
     for instante_llegada_central in llegadas_sardinero[100]:
@@ -616,17 +646,21 @@ def genera_informe(
                                      tiempo_no_valido="30 minutes",
                                      direccion_centro=False,
                                      cortes={3: 14,
-                                             17: 14},
+                                             17: 14,
+                                             8: 14,
+                                             9: 14},
                                      colores=dict(zip((3,
                                                        13,
                                                        14,
                                                        17,
+                                                       8,
                                                        9,
                                                        20),
                                                       ("b",
                                                        "g",
                                                        "r",
                                                        "c",
+                                                       "g",
                                                        "m",
                                                        "y",
                                                        "k")))):
@@ -875,7 +909,8 @@ def genera_informe(
         def formatea_linea(numero, nombre = {3:'Ojaiz línea 3',
                                              13:'Lluja líneas 13 y 14',
                                              17:'Corbán línea 17',
-                                             92:'Cueto línea 9',
+                                             8:'Cueto línea 8',
+                                             9: 'Monte linea 9',
                                              20:'Monte líneas 9 y 20'}):
             return nombre[numero]
 
