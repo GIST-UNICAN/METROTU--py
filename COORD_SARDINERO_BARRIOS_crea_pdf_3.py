@@ -598,8 +598,10 @@ def genera_informe(
                          instante_llegada,
                          instante_salida_central,
                          tiempo_espera))
-            except IndexError:
+            except IndexError as e:
+                print(e)
                 pass
+    print(resultados)
 ##    debug(pretty_output('resultados["Barrios_Sardinero"]',
 ##                        resultados["Barrios_Sardinero"]))
 
