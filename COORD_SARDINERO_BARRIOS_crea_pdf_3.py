@@ -591,12 +591,11 @@ def genera_informe(
     llegadas_sardinero[8]=filtra_llegadas(llegadas_sardinero[8],
                                            timedelta(minutes=1))
     #juntamos las líneas 91 y 20 que van hacia monte porque estan "coordinadas"
-    salidas_sardinero[20] = sorted(chain(salidas_sardinero[9],
-                                         salidas_sardinero[20]))
-    llegadas_sardinero[20] = sorted(chain(llegadas_sardinero[9],
-                                          llegadas_sardinero[20]))
+    salidas_sardinero[20] = sorted(salidas_sardinero[20])
+    llegadas_sardinero[20] = sorted(llegadas_sardinero[20])
     llegadas_sardinero[100]=filtra_llegadas(llegadas_sardinero[100])
     for instante_llegada_central in llegadas_sardinero[100]:
+        print(instante_llegada_central)
         for linea in lineas_acaban_sardinero:
             try:
                 posición_salida_linea = bisect(salidas_sardinero[linea],
