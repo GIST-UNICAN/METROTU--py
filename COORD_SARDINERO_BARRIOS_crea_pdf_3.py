@@ -672,8 +672,9 @@ def genera_informe(
 
         def comprueba_media_mas_50_porciento(row):
 ##            return True
-            return 1 if row['espera']>1.5*table_intercambiador_barrios_espera[
-                'espera'].get(int(row['linea'])) else 0
+            return 1 if row['espera']>un_minuto*6 else 0
+#            return 1 if row['espera']>1.5*table_intercambiador_barrios_espera[
+#                'espera'].get(int(row['linea'])) else 0
         
         def comprueba_outlayers(row):
             return 1 if row['espera'] > pd.Timedelta(outlayers_time) else 0
