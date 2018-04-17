@@ -30,7 +30,7 @@ from pdfkit import from_file as create_pdf
 from tools import exhaust_map, create_objects, pretty_output
 import horarios
 
-dia_resta = 4
+dia_resta = 5
 #generamos el directorio de salvado
 actual=datetime.now()
 ##actual_aux=actual-timedelta(days=1)
