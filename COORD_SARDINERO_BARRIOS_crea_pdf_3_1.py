@@ -322,11 +322,23 @@ def genera_informe(
                "AND (parada IN (11, 44) "
                "AND linea IN (3,17)) or (parada in (171, 194) and linea in (8,9)))".format(fecha_inicio,
                                              fecha_fin),
+               "create temporary table " 
+               "mala_100 "
+               "as SELECT Linea, coche, parada,  min(viaje) as viaje FROM `pasos_parada` "
+               "WHERE linea=100  and parada =516 and coche>100 "
+               "and instante between '{0}' and '{1}' "  
+               "group by Linea, Coche, parada".format(fecha_inicio,
+                                                      fecha_fin),
                "SELECT * FROM pasos_utiles "
                "WHERE NOT EXISTS (SELECT * FROM viajes_directos "
                "WHERE viajes_directos.Linea=pasos_utiles.Linea "
                "AND viajes_directos.Viaje=pasos_utiles.Viaje "
                "AND pasos_utiles.Coche=viajes_directos.Coche) "
+               "AND not exists (select * from mala_100 "
+               "where pasos_utiles.linea=mala_100.linea and "
+               "pasos_utiles.viaje=mala_100.viaje and "
+               "pasos_utiles.coche=mala_100.coche and "
+               "pasos_utiles.parada=mala_100.parada) "
                "ORDER BY Linea, Coche, Instante")
     for q in queries:
         print(q)
