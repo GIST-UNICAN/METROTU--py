@@ -89,6 +89,6 @@ def filtra_excel(
     print(c_rm)
 
 filtra_excel(
-    r"D:\Users\Andres\OneDrive\OneDrive - Universidad de Cantabria\Recordar GIST - VARIOS\datos_tus\11_a_15.rpt"
+    r"D:\Users\Andres\OneDrive\OneDrive - Universidad de Cantabria\Recordar GIST - VARIOS\datos_tus\16.rpt"
     )
 
