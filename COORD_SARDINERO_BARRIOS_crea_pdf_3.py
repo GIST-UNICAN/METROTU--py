@@ -39,6 +39,9 @@ actual=datetime.now()
 directorio="{}{}{}_bis/".format(actual.year,
                                 actual.month,
                                 actual.day-dia_resta)
+archivo="{}{}{}".format(actual.year,
+                                actual.month,
+                                actual.day-dia_resta)
 if os.path.exists(directorio):
     pass
 else:
@@ -841,7 +844,8 @@ def genera_informe(
         #un 1 o un 2 o un 7 en el caso de valdecilla
         alternativas_horarios_dataframe(resultado_mas_50)
         columnas_mostrar = alternativas_horarios_dataframe(resultado_outlayers)
-        #guardamos en csv
+       
+        
         # pintamos espera en minutos
         df_interc_barrios['espera minutos'] = (df_interc_barrios['espera']
                                                / pd.Timedelta('1 minute'))
@@ -850,6 +854,9 @@ def genera_informe(
             for item in df_interc_barrios['salida']]
         grupo = df_interc_barrios.sort_values(
             by=['salida']).groupby('linea_real')
+        
+        #guardamos en csv
+        df_interc_barrios.to_csv(path_or_buf=R"C:\GITHUB - SYNC\METROTU--py\CSV\{0}-{1}.csv".format(archivo,trayecto))
         ncols = 1
         nrows = 1 #int(np.ceil(grupo.ngroups/ncols))
 ##        fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
