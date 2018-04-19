@@ -9,8 +9,8 @@ query_append=list()
 paradas={516:{0:(100,),1:()},
               511:{0:(8,9,20,1,2),1:(100,)},
               515:{0:(),1:(8,9,20)},
-              509:{0:(100,),1:(3,13,14,17)},
-              512:{0:(3,13,14,17),1:(1,2,72,100)}}
+              509:{1:(100,1,2,72),0:(3,13,14,17)},
+              512:{1:(3,13,14,17),0:(100,)}}
 def slices(
         s,
     args=(0, 31, 37, 45, 51, 58,67,75, 87, 92, 98,129,153, 177,200,201,203,205,-1),
@@ -26,7 +26,7 @@ def slices(
 
 def insertarHoraTeorica(fila):
     fecha=fila[5].replace(hour=0, minute=0, second=0)
-    query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{}}})".format(
+    query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{})".format(
           fila[0],fila[1],fila[4],fila[3],fila[5],'None',0,fecha,2,fila[2]))
 
 def filtra_excel(
@@ -74,32 +74,40 @@ def filtra_excel(
                 continue
     for fila in lista_filas:
         if fila[0] in paradas.get(fila[3],{}).get(0,{}):
-            print(type(fila[6]))
-            fecha=fila[6].replace(hour=0, minute=0, second=0)
-            query_append.append("({},{},{},{},'{}','{}',{},'{}')".format(
-                        fila[0],fila[1],fila[4],fila[3],fila[6],'None',0,fecha,1,fila[2]))
+            try: #para probar que no se trata de un caso de hora nul, que se estimaría
+                fecha=fila[6].replace(hour=0, minute=0, second=0)
+                query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{})".format(
+                            fila[0],fila[1],fila[4],fila[3],fila[6],'None',0,fecha,1,fila[2]))
+            except TypeError:
+                insertarHoraTeorica(fila)
+                pass
+            
 #            print('llegadas')
         elif fila[0] in paradas.get(fila[3],{}).get(1,{}):
-            fecha=fila[7].replace(hour=0, minute=0, second=0)
-            query_append.append("({},{},{},{},'{}','{}',{},'{}')".format(
-                        fila[0],fila[1],fila[4],fila[3],fila[7],'None',0,fecha,1,fila[2]))
+            try:
+                fecha=fila[7].replace(hour=0, minute=0, second=0)
+                query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{})".format(
+                            fila[0],fila[1],fila[4],fila[3],fila[7],'None',0,fecha,1,fila[2]))
+            except TypeError:
+                insertarHoraTeorica(fila)
+                pass
         else:
             insertarHoraTeorica(fila)
             
 #            print('salidas')
         
-#    querie="INSERT INTO `pasos_parada` (`Linea`, `Coche`, `Viaje`, `Parada`, `Instante`, `Nombre`, `PSuben`, `Fecha`) VALUES " +str(query_append)[1:-1].replace('"',"")
-#    try:
-#        with contextlib.closing(MySQLdb.connect(
-#                host='193.144.208.142',
-#                user="root",
-#                passwd="madremia902",
-#                db="autobuses")) as cnx:
-#            with contextlib.closing(cnx.cursor()) as crs:
-#                crs.execute(querie)
-#                cnx.commit()
-#    except Exception as e:
-#        print('sql error' + str(e))
+    querie="INSERT INTO `pasos_parada_ajustada` (`Linea`, `Coche`, `Viaje`, `Parada`, `Instante`, `Nombre`, `PSuben`, `Fecha`, `tipo_lectura`, `Sublinea`) VALUES " +str(query_append)[1:-1].replace('"',"")
+    try:
+        with contextlib.closing(MySQLdb.connect(
+                host='193.144.208.142',
+                user="root",
+                passwd="madremia902",
+                db="autobuses")) as cnx:
+            with contextlib.closing(cnx.cursor()) as crs:
+                crs.execute(querie)
+                cnx.commit()
+    except Exception as e:
+        print('sql error' + str(e))
     print(c_rr)
     print(c_rm)
     
