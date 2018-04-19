@@ -5,13 +5,15 @@ from datetime import datetime, date
 import contextlib
 import MySQLdb
 # 0 llegadas 1 salidas
-paradas={516:{0:(100,),1:None},
+query_append=list()
+paradas={516:{0:(100,),1:()},
               511:{0:(8,9,20,1,2),1:(100,)},
-              515:{0:None,1:(8,9,20)},
+              515:{0:(),1:(8,9,20)},
               509:{0:(100,),1:(3,13,14,17)},
               512:{0:(3,13,14,17),1:(1,2,72,100)}}
 def slices(
-    args=(0, 31, 37, 45, 51, 58,67,75, 87, 92, 98,129,153, 177,196,201,203,205,-1),
+        s,
+    args=(0, 31, 37, 45, 51, 58,67,75, 87, 92, 98,129,153, 177,200,201,203,205,-1),
     wanted_columns = {1, 3, 5, 7, 9, 11,12,13}
     #args=(0, 24, 30, 36, 43,104,111, 119,138,143,150,152,-1),
     #wanted_columns = {1,2,3,4,5,7,9,10}
@@ -22,10 +24,15 @@ def slices(
     except IndexError:
         return
 
+def insertarHoraTeorica(fila):
+    fecha=fila[5].replace(hour=0, minute=0, second=0)
+    query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{}}})".format(
+          fila[0],fila[1],fila[4],fila[3],fila[5],'None',0,fecha,2,fila[2]))
+
 def filtra_excel(
     ruta_entrada
     ):
-    query_append=list()
+    
     c_rr=0
     c_rm=0
     #ruta_entrada=os.getcwd()+datos_row.archivo
@@ -35,42 +42,51 @@ def filtra_excel(
         iter_archivo = iter(archivo_entrada)
         next(iter_archivo)
         next(iter_archivo)
-        
+        lista_filas=list()
         for raw_row in iter_archivo:
             try:
                 c_rr+=1
                 row=list(slices(raw_row))
-                row[0] = int(row[0])
-                row[1] = int(row[1])
-                row[2] = int(row[2])
-                row[3] = int(row[3])
-                row[4] = int(row[4])
+                row[0] = int(row[0]) #linea
+                row[1] = int(row[1]) #coche
+                row[2] = int(row[2]) #sublinea
+                row[3] = int(row[3]) #numero de parada
+                row[4] = int(row[4]) #viaje
                 if row[5]== 'NULL':
                     row[5]='Null'
                 else:
-                    row[5] = datetime.strptime(str(row[5]), "%Y-%m-%d %H:%M:%S.%f")
+                    row[5] = datetime.strptime(str(row[5]), "%Y-%m-%d %H:%M:%S.%f") #href
                 if row[6]== 'NULL':
                     row[6]='Null'
                 else:
-                    row[6] = datetime.strptime(str(row[6]), "%Y-%m-%d %H:%M:%S.%f")
+                    row[6] = datetime.strptime(str(row[6]), "%Y-%m-%d %H:%M:%S.%f") #hlleg
                 if row[7]== 'NULL':
                     row[7]='Null'
                 else:
-                    row[7] = datetime.strptime(str(row[7]), "%Y-%m-%d %H:%M:%S.%f")
+                    row[7] = datetime.strptime(str(row[7]), "%Y-%m-%d %H:%M:%S.%f") #hsal
                 #insertamos en la bd
-                query_append.append("({},{},{},{},'{}','{}',{},'{}')".format(
-                        row[0],row[1],row[4],row[2],row[5],row[3],row[6],row[7]))
+                lista_filas.append(row)
             except ValueError as e:
                 print(e)
                 c_rm+=1
                 print("Row mala")
                 print(row)
                 continue
-    for fila in row:
-        if fila[0] in paradas[fila[3][0]]:
-            print('llegadas')
-        if fila[0] in paradas[fila[3][1]]:
-            print('salidas')
+    for fila in lista_filas:
+        if fila[0] in paradas.get(fila[3],{}).get(0,{}):
+            print(type(fila[6]))
+            fecha=fila[6].replace(hour=0, minute=0, second=0)
+            query_append.append("({},{},{},{},'{}','{}',{},'{}')".format(
+                        fila[0],fila[1],fila[4],fila[3],fila[6],'None',0,fecha,1,fila[2]))
+#            print('llegadas')
+        elif fila[0] in paradas.get(fila[3],{}).get(1,{}):
+            fecha=fila[7].replace(hour=0, minute=0, second=0)
+            query_append.append("({},{},{},{},'{}','{}',{},'{}')".format(
+                        fila[0],fila[1],fila[4],fila[3],fila[7],'None',0,fecha,1,fila[2]))
+        else:
+            insertarHoraTeorica(fila)
+            
+#            print('salidas')
         
 #    querie="INSERT INTO `pasos_parada` (`Linea`, `Coche`, `Viaje`, `Parada`, `Instante`, `Nombre`, `PSuben`, `Fecha`) VALUES " +str(query_append)[1:-1].replace('"',"")
 #    try:
