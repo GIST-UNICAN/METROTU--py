@@ -25,7 +25,7 @@ def slices(
         return
 
 def insertarHoraTeorica(fila):
-    fecha=fila[5].replace(hour=0, minute=0, second=0)
+    fecha=fila[5].replace(hour=0, minute=0, second=0, microsecond=0)
     query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{})".format(
           fila[0],fila[1],fila[4],fila[3],fila[5],'None',0,fecha,2,fila[2]))
 
@@ -75,7 +75,7 @@ def filtra_excel(
     for fila in lista_filas:
         if fila[0] in paradas.get(fila[3],{}).get(0,{}):
             try: #para probar que no se trata de un caso de hora nul, que se estimaría
-                fecha=fila[6].replace(hour=0, minute=0, second=0)
+                fecha=fila[6].replace(hour=0, minute=0, second=0, microsecond=0)
                 query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{})".format(
                             fila[0],fila[1],fila[4],fila[3],fila[6],'None',0,fecha,1,fila[2]))
             except TypeError:
@@ -85,7 +85,7 @@ def filtra_excel(
 #            print('llegadas')
         elif fila[0] in paradas.get(fila[3],{}).get(1,{}):
             try:
-                fecha=fila[7].replace(hour=0, minute=0, second=0)
+                fecha=fila[7].replace(hour=0, minute=0, second=0, microsecond=0)
                 query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{})".format(
                             fila[0],fila[1],fila[4],fila[3],fila[7],'None',0,fecha,1,fila[2]))
             except TypeError:
@@ -115,7 +115,7 @@ def filtra_excel(
 
 
 filtra_excel(
-    r"D:\Users\Andres\OneDrive\OneDrive - Universidad de Cantabria\Recordar GIST - VARIOS\datos_tus\17vh.txt"
+    r"D:\Users\Andres\OneDrive\OneDrive - Universidad de Cantabria\Recordar GIST - VARIOS\datos_tus\18vh.rpt"
     )
 
 
