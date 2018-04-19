@@ -36,7 +36,7 @@ actual=datetime.now()
 ##actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
 ##for actual in lista_dias:
-directorio="{}{}{}_bis/".format(actual.year,
+directorio="{}{}{}/".format(actual.year,
                                 actual.month,
                                 actual.day-dia_resta)
 archivo="{}{}{}".format(actual.year,
@@ -995,13 +995,13 @@ def genera_informe(
                                    tablas,
                                    titulos,
                                    nombres_fotos)))))
-    with open(directorio+'informe{}{}{}_bis.html'.format(actual.year,
+    with open(directorio+'informe{}{}{}.html'.format(actual.year,
                                                          actual.month,
                                                          actual.day-dia_resta),
               'w') as file:
         print(texto_exportar, file=file)
     create_pdf(
-        directorio+'informe{}{}{}_bis.html'.format(actual.year,
+        directorio+'informe{}{}{}.html'.format(actual.year,
                                                    actual.month,
                                                    actual.day-dia_resta),
         directorio+'{}-{}-{}.pdf'.format(actual.year,
