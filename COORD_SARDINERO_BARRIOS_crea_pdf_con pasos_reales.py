@@ -30,7 +30,7 @@ from pdfkit import from_file as create_pdf
 from tools import exhaust_map, create_objects, pretty_output
 import horarios
 
-dia_resta = 1
+dia_resta = 2
 #generamos el directorio de salvado
 actual=datetime.now()
 ##actual_aux=actual-timedelta(days=1)
@@ -57,136 +57,7 @@ class datetime_gist(datetime):
     pass
 
 
-class Comprobador():
 
-
-    @staticmethod
-    def time2datetime(lista):
-        dia=actual.day - dia_resta  ##################################### ojito
-        mes=actual.month
-        año=actual.year
-        return tuple((datetime_gist(año,
-                                    mes,
-                                    dia,
-                                    parada.hour,
-                                    parada.minute,
-                                    parada.second) for parada in lista))
-
-    @staticmethod
-    def datetime2datetimegist(dt):
-        return datetime_gist(dt.year,
-                             dt.month,
-                             dt.day,
-                             dt.hour,
-                             dt.minute,
-                             dt.second,
-                             dt.microsecond)
-    
-    def __init__(self,
-                 linea,
-                 horario_linea,
-                 Δt_hasta_parada_control_moda,
-                 Δt_hasta_parada_control_min=None,
-                 Δt_hasta_parada_control_max=None,
-                 reduccion=3/5,
-                 ampliacion=2):
-        self.linea=linea
-        self.horario_linea = Comprobador.time2datetime(horario_linea)
-        self.Δt_hasta_parada_control_moda = Δt_hasta_parada_control_moda
-        self.Δt_hasta_parada_control_min = (
-            Δt_hasta_parada_control_min if Δt_hasta_parada_control_min
-            else reduccion*Δt_hasta_parada_control_moda)
-        self.Δt_hasta_parada_control_max = (
-            Δt_hasta_parada_control_max if Δt_hasta_parada_control_max
-            else ampliacion*Δt_hasta_parada_control_moda)
-
-    def calcula_salida_fuera_horario(self,
-                                     paso_cabecera_SAE,
-                                     paso_parada_siguiente):
-        salida_teorica_moda = (paso_parada_siguiente
-                               - self.Δt_hasta_parada_control_moda)
-        if salida_teorica_moda > paso_cabecera_SAE:
-            #Es un valor válido, después del registro de paso del SAE.
-            salida_teorica_moda = Comprobador.datetime2datetimegist(
-                salida_teorica_moda)
-            salida_teorica_moda.linea = self.linea
-            return salida_teorica_moda
-        else:
-            #Probamos a ver si es posible con el Δt mínimo entre
-            #paradas.
-            salida_teorica_minima = (paso_parada_siguiente
-                                     - self.Δt_hasta_parada_control_min)
-            if salida_teorica_minima > paso_cabecera_SAE:
-                #Ok, es posible, con suerte.
-                salida_teorica_minima = Comprobador.datetime2datetimegist(
-                    salida_teorica_minima)
-                salida_teorica_minima.linea = self.linea
-                return salida_teorica_minima
-            else:
-                #No es posible. O bien los datos del SAE no son
-                #correctos, o el bus tarda a veces menos entre las paradas.
-                info(pretty_output("Los datos del SAE reflejan que en la línea"
-                     " {} el bus pasó por cabecera a las "
-                     "{} y por la parada "
-                     "siguiente a las {}, "
-                     " pero el Δt mínimo entre ambas es de ".format(
-                         self.linea,
-                         paso_cabecera_SAE.ctime(),
-                         paso_parada_siguiente.ctime())))
-                salida_teorica_moda = Comprobador.datetime2datetimegist(
-                    salida_teorica_moda)
-                salida_teorica_moda.linea = self.linea
-                return salida_teorica_moda
-
-    def __call__(self,
-                 paso_cabecera_SAE,
-                 paso_parada_siguiente,
-                 cero_segundos=time()):
-        punto_insercion=bisect_left(self.horario_linea, paso_cabecera_SAE)
-        try:
-            salida_teorica_horario = self.horario_linea[punto_insercion]
-        except IndexError:
-            salida_teorica_horario = self.horario_linea[-1]
-            info(pretty_output(
-                "El bus de la linea {} está registrado que pasó por"
-                " cabecera a {}, pero la última salida "
-                "programada, que será la que tomemos como teórica fue a "
-                "{}".format(
-                    self.linea,
-                    paso_cabecera_SAE.ctime(),
-                    salida_teorica_horario.ctime())))
-        if (#No nos creemos que el bus haya tardado tanto, salió más tarde
-            paso_parada_siguiente-salida_teorica_horario
-            > self.Δt_hasta_parada_control_max
-            or #No nos creemos que el bus tardara tan poco, salió antes
-            paso_parada_siguiente-salida_teorica_horario
-            < self.Δt_hasta_parada_control_min):
-            return self.calcula_salida_fuera_horario(paso_cabecera_SAE,
-                                                     paso_parada_siguiente)
-        else:
-            salida_teorica_horario.linea = self.linea
-            return salida_teorica_horario
-
-(comprueba_3,
- comprueba_13,
- comprueba_17,
- comprueba_100_sardi,
- comprueba_100_valde)= starmap(Comprobador,
-                               ((3,
-                                 horarios.paradas_3,
-                                 timedelta(minutes=0, seconds=40)),
-                                (13,
-                                 horarios.paradas_13,
-                                 timedelta(minutes=1, seconds=17)),
-                                (17,
-                                 horarios.paradas_17,
-                                 timedelta(minutes=1, seconds=4)),
-                                (100,
-                                 horarios.paradas_C_Int_Sardinero,
-                                 timedelta(minutes=1, seconds=36)),
-                                (100,
-                                 horarios.paradas_C_Int_Valdecilla,
-                                 timedelta(minutes=2, seconds=00))))
 
 
 
@@ -285,9 +156,7 @@ def genera_informe(
                                            números_de_paradas.Valdecilla,
                                            llegadas_valdecilla)
 
-    comprueba_llegada_sardinero = partial(comprueba_llegada_intercambiador,
-                                          números_de_paradas.Sardinero,
-                                          llegadas_sardinero)
+
 
     comprueba_llegada_avda_valdecilla = partial(
         comprueba_llegada_intercambiador,
@@ -296,6 +165,10 @@ def genera_informe(
 
     comprueba_llegada_sardinero1 = partial(comprueba_llegada_intercambiador,
                                            números_de_paradas.Sardinero1,
+                                           llegadas_sardinero)
+    
+    comprueba_llegada_sardinero = partial(comprueba_llegada_intercambiador,
+                                           números_de_paradas.Sardinero,
                                            llegadas_sardinero)
 
     if not (fecha_inicio and fecha_fin):
@@ -323,7 +196,7 @@ def genera_informe(
                "FROM `pasos_parada_ajustada` "
                "WHERE Instante between '{0}' AND '{1}' "
                "and ( (linea=3 and sublinea =2) or (linea=17 and sublinea in (3,4,5,6) ) " 
-               "or (linea=8 and sublinea =1) or(linea=9 and sublinea =1)  ))".format(fecha_inicio,
+               "or (linea=8 and sublinea =1) or(linea=9 and sublinea =2)  ))".format(fecha_inicio,
                                              fecha_fin),
                "SELECT * FROM pasos_utiles "
                "WHERE NOT EXISTS (SELECT * FROM viajes_directos "
@@ -404,17 +277,17 @@ def genera_informe(
 ##            if linea==100:
                 elif comprueba_llegada_sardinero(100):
                     llegadas_sardinero[100].append(instante)
-                elif parada==números_de_paradas.Sardinero:
+                elif parada==números_de_paradas.Sardinero1:
                     salidas_sardinero[100].append(instante)
             elif linea==3:
                 if comprueba_llegada_valdecilla(3):
                     llegadas_valdecilla[3].append(instante)
-                elif parada==números_de_paradas.Cajo2:
+                elif parada==números_de_paradas.Avda_Valdecilla:
                     salidas_valdecilla[3].append(instante)
             elif linea==13:
                 if comprueba_llegada_valdecilla(13):
                     llegadas_valdecilla[13].append(instante)
-                elif parada==números_de_paradas.TQuevedo22:
+                elif parada==números_de_paradas.Avda_Valdecilla:
                     salidas_valdecilla[13].append(instante)
             elif linea==14:
                 if comprueba_llegada_valdecilla(14):
@@ -427,7 +300,7 @@ def genera_informe(
                     #La primera parada tras salir es Pedro San Martín.
                 if comprueba_llegada_avda_valdecilla(17):
                     llegadas_valdecilla[17].append(instante)
-                elif parada==números_de_paradas.Pedro_S_Martin_8:
+                elif parada==números_de_paradas.Avda_Valdecilla:
                     salidas_valdecilla[17].append(instante)
             elif linea==20:
                 if comprueba_llegada_sardinero1(20):
