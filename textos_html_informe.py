@@ -91,6 +91,12 @@ style='font-size:16.0pt;line-height:106%'>INFORME DÍA {dia} de {mes} del {ano}<
 {informe_completo}
 
 <p class=MsoNormal align=center style='text-align:center'><span
+style='font-size:12.0pt;line-height:106%'>NOTA: Tiempo Conexion Medio: tiene en cuenta para la salida de bus el momento en el que abandona el intercambiador, no cuando llega. </span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span
+style='font-size:12.0pt;line-height:106%'>NOTA: Espera >= 6 min se tiene en cuenta el tiempo medio de intercambio de 4 minutos más el 50% </span></p>
+
+<p class=MsoNormal align=center style='text-align:center'><span
 style='font-size:12.0pt;line-height:106%'>&nbsp;</span></p>
 
 <p class=MsoNormal><span style='font-size:12.0pt;line-height:106%'>&nbsp;</span></p>
