@@ -149,12 +149,23 @@ def genera_informe(
                                          lista_llegadas, linea):
         return (parada == num_parada_interc
                 and (num_parada_interc != linea_anterior[cols.parada]
-                     or (instante-lista_llegadas[linea][-1] > un_minuto
+                     or (instante-lista_llegadas[linea][-1] > un_minuto*10
+                         if len(lista_llegadas[linea]) else True)))
+        
+    def comprueba_salida_intercambiador(num_parada_interc,
+                                         lista_llegadas, linea):
+        return (parada == num_parada_interc
+                and (num_parada_interc != linea_anterior[cols.parada]
+                     or (instante-lista_llegadas[linea][-1] > un_minuto*10 #margen de 10 minustos entre lecturas
                          if len(lista_llegadas[linea]) else True)))
 
     comprueba_llegada_valdecilla = partial(comprueba_llegada_intercambiador,
                                            números_de_paradas.Valdecilla,
                                            llegadas_valdecilla)
+    
+    comprueba_salida_valdecilla = partial(comprueba_salida_intercambiador,
+                                           números_de_paradas.Valdecilla,
+                                           salidas_valdecilla)
 
 
 
@@ -162,6 +173,11 @@ def genera_informe(
         comprueba_llegada_intercambiador,
         números_de_paradas.Avda_Valdecilla,
         llegadas_valdecilla)
+    
+    comprueba_salida_avda_valdecilla = partial(
+        comprueba_salida_intercambiador,
+        números_de_paradas.Avda_Valdecilla,
+        salidas_valdecilla)
 
     comprueba_llegada_sardinero1 = partial(comprueba_llegada_intercambiador,
                                            números_de_paradas.Sardinero1,
@@ -284,6 +300,18 @@ def genera_informe(
                     llegadas_valdecilla[3].append(instante)
                 elif parada==números_de_paradas.Avda_Valdecilla:
                     salidas_valdecilla[3].append(instante)
+            elif linea==3:
+                if comprueba_llegada_valdecilla(3):
+                    llegadas_valdecilla[3].append(instante)
+                elif parada==números_de_paradas.Avda_Valdecilla:
+                    if (linea_anterior[cols.parada]
+                        == números_de_paradas.Avda_Valdecilla
+                        and instante-salidas_sardinero[3][-1]
+                        < diez_minutos):
+                        #Ya estaba registrada la salida, pero unos segundos
+                        #prematuramente.
+                        salidas_sardinero[9].pop()
+                    salidas_sardinero[9].append(instante)
             elif linea==13:
                 if comprueba_llegada_valdecilla(13):
                     llegadas_valdecilla[13].append(instante)
@@ -519,10 +547,10 @@ def genera_informe(
                                      outlayers_time='15 minutes',
                                      tiempo_no_valido="30 minutes",
                                      direccion_centro=False,
-                                     cortes={3: 14,
-                                             17: 14,
-                                             8: 14,
-                                             9: 14},
+                                     cortes={3: (8,14,19),
+                                             17: (8,14,),
+                                             8: (8,14,),
+                                             9: (8,14,)},
                                      colores=dict(zip((3,
                                                        13,
                                                        14,
@@ -605,7 +633,7 @@ def genera_informe(
                 return (['Conexión',
                          'Espera Media',
                          'Datos empleados',
-                         'Supera media + 50%'],
+                         'Espera + 6min (4 media + 50%)'],
                         ['Conexión',
                          'Línea',
                          'Paso autobús',
@@ -634,7 +662,7 @@ def genera_informe(
                 return (['Conexión',
                          'Espera Media'
                          ,'Datos empleados',
-                         'Supera media + 50%'],
+                         'Espera + 6min (4 media + 50%)'],
                         ['Conexión',
                          'Línea',
                          'Paso autobús',
@@ -705,7 +733,7 @@ def genera_informe(
         resultado.columns = ['Conexión',
                              'Espera Media',
                              'Datos empleados',
-                             'Supera media + 50%']
+                             'Espera + 6min (4 media + 50%)']
         resultado_mas_50 = df_interc_barrios[
             df_interc_barrios.espera_mas_50==1]
         #hay que comprobar con estas conexiones perdidas si pudieron coger
@@ -734,24 +762,27 @@ def genera_informe(
         plt.grid(True)
         handles = []
         labels = []
+                
         for key in grupo.groups.keys():
             if key in cortes:
+                horas_corte=chain(cortes[key], (24,))
+                grupos=list()
+                hora_0=0
+                for hora_1 in horas_corte:
+                    franja = (hora_0 < grupo.get_group(key)["hora salida"]) & (grupo.get_group(key)["hora salida"] < hora_1)
+                    grupos.append(grupo.get_group(key)[franja])
+                    hora_0=hora_1
+                
+                x_s = (g["hora salida"] for g in grupos)
+                y_s = (g["espera minutos"] for g in grupos)
+                for x, y in zip(x_s, y_s):
+                    plt.scatter(x,y, color=colores[key])
+                    handle, = plt.plot(x,y, color=colores[key])      
 ##                x=grupo.get_group(key)['hora salida']
 ##                debug(pretty_output("key", key))
 ##                debug(pretty_output("x", x))
 ##                debug(pretty_output("type(x)", type(x)))
-                franja_mañana = (grupo.get_group(key)["hora salida"]
-                                 < cortes[key])
-                franja_tarde = (grupo.get_group(key)["hora salida"]
-                                >= cortes[key])
-##                debug(str(franja_mañana))
-                grupo_mañana = grupo.get_group(key)[franja_mañana]
-                grupo_tarde = grupo.get_group(key)[franja_tarde]
-                x_s = (g["hora salida"] for g in (grupo_mañana, grupo_tarde))
-                y_s = (g["espera minutos"] for g in (grupo_mañana, grupo_tarde))
-                for x, y in zip(x_s, y_s):
-                    plt.scatter(x,y, color=colores[key])
-                    handle, = plt.plot(x,y, color=colores[key])
+                
             else:
                 x = grupo.get_group(key)['hora salida']
                 y = grupo.get_group(key)['espera minutos']
