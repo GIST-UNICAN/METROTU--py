@@ -243,12 +243,14 @@ def genera_informe(
                            "nombre"))
     cols = Columnas(*range(6))
     un_minuto = timedelta(minutes=1)
-    for linea_bus, rows in groupby(datos_row,
-                                   lambda fila: (fila[cols.linea],
-                                                 fila[cols.coche])):
-        linea=linea_bus[0]
-##        iterador_filas=iter(rows)
-##        linea_anterior=next(iterador_filas)
+
+
+    def procesa_paradas(linea,
+                        parada_llegada,
+                        parada_salida,
+                        lista_llegadas,
+                        lista_salidas,
+                        rows):
         linea_anterior = (None,
                           None,
                           None,
@@ -262,148 +264,196 @@ def genera_informe(
                                         0),
                           None,
                           None)
-##        first_loop = True
         for row in rows:
-##            debug(str(row))
-##            debug(str(row[4]))
-##            debug("\n")
-            instante=datetime_gist(row[cols.instante].year,
-                                   row[cols.instante].month,
-                                   row[cols.instante].day,
-                                   row[cols.instante].hour,
-                                   row[cols.instante].minute,
-                                   row[cols.instante].second,
-                                   row[cols.instante].microsecond)
-            instante_anterior=datetime_gist(
-                linea_anterior[cols.instante].year,
-                linea_anterior[cols.instante].month,
-                linea_anterior[cols.instante].day,
-                linea_anterior[cols.instante].hour,
-                linea_anterior[cols.instante].minute,
-                linea_anterior[cols.instante].second,
-                row[cols.instante].microsecond)
+            parada = row[cols.parada]
+            parada_anterior = linea_anterior[cols.parada]
+            instante = datetime_gist(row[cols.instante].year,
+                                     row[cols.instante].month,
+                                     row[cols.instante].day,
+                                     row[cols.instante].hour,
+                                     row[cols.instante].minute,
+                                     row[cols.instante].second,
+                                     row[cols.instante].microsecond)
+            instante_anterior = datetime_gist(
+                    linea_anterior[cols.instante].year,
+                    linea_anterior[cols.instante].month,
+                    linea_anterior[cols.instante].day,
+                    linea_anterior[cols.instante].hour,
+                    linea_anterior[cols.instante].minute,
+                    linea_anterior[cols.instante].second,
+                    row[cols.instante].microsecond)
             instante.linea=linea
             instante_anterior.linea=linea
-            parada=row[cols.parada]
-            if linea==100:
-                if comprueba_llegada_avda_valdecilla(100):
+            if parada == parada_llegada:
+                if parada_anterior == parada_llegada:
+                    if row[cols.viaje] < linea_anterior[cols.viaje]:
+                        lista_llegadas.pop()
+                    else:
+                        return
+                lista_llegadas.append(instante)
+            elif parada == parada_salida:
+                if parada_anterior == parada_salida:
+                    if row[cols.viaje] > linea_anterior[cols.viaje]:
+                        lista_salidas.pop()
+                    else:
+                        return
+                lista_salidas.append(instante)
+            linea_anterior=row
+            
+    lineas_sardinero = (8, 9, 20)
+    lineas_valdecilla = (3, 13, 14, 17)
+    lineas_intercambiadores = lineas_sardinero + lineas_valdecilla
+    resto_lineas = (1, 2, 72)
+
+    def get_params_proceso_linea(linea,
+                                 Params_proceso_linea=namedtuple(
+                                         "Params_proceso_linea",
+                                         ("parada_llegada",
+                                          "parada_salida",
+                                          "lista_llegadas",
+                                          "lista_salidas",
+                                          "fila",
+                                          "fila_anterior"))):
+        if linea in lineas_valdecilla :
+            return Params_proceso_linea(
+                    números_de_paradas.Valdecilla,
+                    números_de_paradas.Avda_Valdecilla,
+                    llegadas_valdecilla[linea],
+                    salidas_valdecilla[linea])
+        elif linea in lineas_sardinero:
+            return Params_proceso_linea(
+                    números_de_paradas.Sardinero1,
+                    números_de_paradas.Sardinero2,
+                    llegadas_valdecilla[linea],
+                    salidas_valdecilla[linea])   
+        elif linea in (1, 2, 72):
+            return Params_proceso_linea(
+                    números_de_paradas.Sardinero1,
+                    números_de_paradas.Sardinero2,
+                    llegadas_valdecilla[linea],
+                    salidas_valdecilla[linea]) 
+
+
+    for linea_bus, rows in groupby(datos_row,
+                                   lambda fila: (fila[cols.linea],
+                                                 fila[cols.coche])):
+        linea=linea_bus[0]
+        if linea == 100:
+            linea_anterior = (None,
+                              None,
+                              None,
+                              None,
+                              datetime_gist(1999,
+                                            1,
+                                            1,
+                                            0,
+                                            0,
+                                            0,
+                                            0),
+                              None,
+                              None)
+            for row in rows:
+                instante=datetime_gist(row[cols.instante].year,
+                                       row[cols.instante].month,
+                                       row[cols.instante].day,
+                                       row[cols.instante].hour,
+                                       row[cols.instante].minute,
+                                       row[cols.instante].second,
+                                       row[cols.instante].microsecond)
+                instante_anterior=datetime_gist(
+                    linea_anterior[cols.instante].year,
+                    linea_anterior[cols.instante].month,
+                    linea_anterior[cols.instante].day,
+                    linea_anterior[cols.instante].hour,
+                    linea_anterior[cols.instante].minute,
+                    linea_anterior[cols.instante].second,
+                    row[cols.instante].microsecond)
+                instante.linea=linea
+                instante_anterior.linea=linea
+                parada=row[cols.parada]
+                parada_anterior = linea_anterior[cols.parada]
+                if parada==números_de_paradas.Avda_Valdecilla:
+                    if parada_anterior == números_de_paradas.Avda_Valdecilla:
+                        if row[cols.viaje] < linea_anterior[cols.viaje]:
+                            llegadas_valdecilla[100].pop()
+                        else:
+                            continue
                     llegadas_valdecilla[100].append(instante)
-                elif parada==números_de_paradas.Valdecilla:
+                elif parada==números_de_paradas.Valdecilla1:
+                    if parada_anterior == números_de_paradas.Valdecilla1:
+                        if row[cols.viaje] > linea_anterior[cols.viaje]:
+                            salidas_valdecilla[100].pop()
+                        else:
+                            continue
                     salidas_valdecilla[100].append(instante)
-##            if linea==100:
-                elif comprueba_llegada_sardinero(100):
+    ##            if linea==100:
+                elif parada==números_de_paradas.Sardinero:
+                    if parada_anterior == números_de_paradas.Sardinero:
+                        if row[cols.viaje] < linea_anterior[cols.viaje]:
+                            llegadas_sardinero[100].pop()
+                        else:
+                            continue
                     llegadas_sardinero[100].append(instante)
                 elif parada==números_de_paradas.Sardinero1:
+                    if parada_anterior == números_de_paradas.Sardinero1:
+                        if row[cols.viaje] > linea_anterior[cols.viaje]:
+                            salidas_sardinero[100].pop()
+                        else:
+                            continue
                     salidas_sardinero[100].append(instante)
-            elif linea==3:
-                if comprueba_llegada_valdecilla(3):
-                    llegadas_valdecilla[3].append(instante)
-                elif parada==números_de_paradas.Avda_Valdecilla:
-                    salidas_valdecilla[3].append(instante)
-            elif linea==3:
-                if comprueba_llegada_valdecilla(3):
-                    llegadas_valdecilla[3].append(instante)
-                elif parada==números_de_paradas.Avda_Valdecilla:
-                    if (linea_anterior[cols.parada]
-                        == números_de_paradas.Avda_Valdecilla
-                        and instante-salidas_sardinero[3][-1]
-                        < diez_minutos):
-                        #Ya estaba registrada la salida, pero unos segundos
-                        #prematuramente.
-                        salidas_sardinero[9].pop()
-                    salidas_sardinero[9].append(instante)
-            elif linea==13:
-                if comprueba_llegada_valdecilla(13):
-                    llegadas_valdecilla[13].append(instante)
-                elif parada==números_de_paradas.Avda_Valdecilla:
-                    salidas_valdecilla[13].append(instante)
-            elif linea==14:
-                if comprueba_llegada_valdecilla(14):
-                    llegadas_valdecilla[13].append(instante)
-                elif parada==números_de_paradas.Avda_Valdecilla:
-                    salidas_valdecilla[13].append(instante)
-            elif linea==17:
-                #Cambios 17:
-                    #Ahora acaba en Avda. Valdecilla, y comienza en Valdecilla.
-                    #La primera parada tras salir es Pedro San Martín.
-                if comprueba_llegada_avda_valdecilla(17):
-                    llegadas_valdecilla[17].append(instante)
-                elif parada==números_de_paradas.Avda_Valdecilla:
-                    salidas_valdecilla[17].append(instante)
-            elif linea==20:
-                if comprueba_llegada_sardinero1(20):
-                    llegadas_sardinero[20].append(instante)
-                elif parada==números_de_paradas.Sardinero2:
-                    if (linea_anterior[cols.parada]
-                        == números_de_paradas.Sardinero2
-                        and instante-salidas_sardinero[20][-1]
-                        < un_minuto):
-                        #Ya estaba registrada la salida, pero unos segundos
-                        #prematuramente.
-                        salidas_sardinero[20].pop()
-                    salidas_sardinero[20].append(instante)
-            elif linea==8:
-                if comprueba_llegada_sardinero1(8):
-                    llegadas_sardinero[8].append(instante)
-                elif parada==números_de_paradas.Sardinero2:
-                    if (linea_anterior[cols.parada]
-                        == números_de_paradas.Sardinero2
-                        and instante-salidas_sardinero[8][-1]
-                        < un_minuto):
-                        #Ya estaba registrada la salida, pero unos segundos
-                        #prematuramente.
-                        salidas_sardinero[8].pop()
-                    salidas_sardinero[8].append(instante)
-            elif linea==9:
-                if comprueba_llegada_sardinero1(9):
-                    llegadas_sardinero[9].append(instante)
-                elif parada==números_de_paradas.Sardinero2:
-                    if (linea_anterior[cols.parada]
-                        == números_de_paradas.Sardinero2
-                        and instante-salidas_sardinero[9][-1]
-                        < un_minuto):
-                        #Ya estaba registrada la salida, pero unos segundos
-                        #prematuramente.
-                        salidas_sardinero[9].pop()
-                    salidas_sardinero[9].append(instante)
-#            elif linea==9:
-#                if parada==números_de_paradas.Sardinero1:
-#                    if (linea_anterior[cols.parada]
-#                        ==números_de_paradas.Sardinero1
-#                        and instante-salidas_sardinero[92][-1]
-#                        < un_minuto):
-#                        #Si vienen dos registros de Sard1 seguidos,
-#                        #hay que quedarse con el primero como llegada de la 91,
-#                        #y con el segundo como salida de la 92.
-#                        salidas_sardinero[92].pop()
-#                    else:
-#                        llegadas_sardinero[91].append(instante)
-#                    salidas_sardinero[92].append(instante)
-#                elif parada==números_de_paradas.Sardinero2:
-#                    if (linea_anterior[cols.parada]
-#                        ==números_de_paradas.Sardinero2
-#                        and instante-salidas_sardinero[91][-1]
-#                        < un_minuto):
-#                        #Si vienen dos registros de Sard2 seguidos,
-#                        #hay que quedarse con el primero como llegada de la 92,
-#                        #y con el segundo como salida de la 91.
-#                        #No ocurre en la pequeña muestra que he analizado, pero
-#                        #no me cuesta mucho añadir la comprobación.
-#                        salidas_sardinero[91].pop()
-#                    else:
-#                        llegadas_sardinero[92].append(instante)
-#                    salidas_sardinero[91].append(instante)
-            elif linea in (1,2,72):
-                if parada==números_de_paradas.Sardinero1:
+                linea_anterior=row
+        elif linea in resto_lineas:
+            linea_anterior = (None,
+                              None,
+                              None,
+                              None,
+                              datetime_gist(1999,
+                                            1,
+                                            1,
+                                            0,
+                                            0,
+                                            0,
+                                            0),
+                              None,
+                              None)
+            for row in rows:
+                instante=datetime_gist(row[cols.instante].year,
+                                       row[cols.instante].month,
+                                       row[cols.instante].day,
+                                       row[cols.instante].hour,
+                                       row[cols.instante].minute,
+                                       row[cols.instante].second,
+                                       row[cols.instante].microsecond)
+                instante_anterior=datetime_gist(
+                    linea_anterior[cols.instante].year,
+                    linea_anterior[cols.instante].month,
+                    linea_anterior[cols.instante].day,
+                    linea_anterior[cols.instante].hour,
+                    linea_anterior[cols.instante].minute,
+                    linea_anterior[cols.instante].second,
+                    row[cols.instante].microsecond)
+                instante.linea=linea
+                instante_anterior.linea=linea
+                parada=row[cols.parada]
+                if parada == números_de_paradas.Sardinero1:
+                    if parada_anterior == números_de_paradas.Sardinero1:
+                        if row[cols.viaje] > linea_anterior[cols.viaje]:
+                            salidas_sardinero['resto'].pop()
+                        else:
+                            continue
                     salidas_sardinero['resto'].append(instante)
-                elif parada==números_de_paradas.Valdecilla:
+                elif parada == números_de_paradas.Valdecilla:
+                    if parada_anterior == números_de_paradas.Valdecilla:
+                        if row[cols.viaje] > linea_anterior[cols.viaje]:
+                            salidas_valdecilla.pop()
+                        else:
+                            continue
                     salidas_valdecilla['resto'].append(instante)
-            linea_anterior=row
-##            first_loop = False
-##    debug(pretty_output("llegadas_sardinero", llegadas_sardinero[100]))
-##    debug(pretty_output("salidas_sardinero", salidas_sardinero[100]))
-##    debug(pretty_output("llegadas_valdecilla", llegadas_valdecilla[100]))
-##    debug(pretty_output("salidas_valdecilla", salidas_valdecilla[100]))
+                linea_anterior=row
+        elif linea in lineas_intercambiadores:
+            procesa_paradas(linea,
+                            *get_params_proceso_linea(linea))
+
     lineas_acaban_sardinero = (20, 8) #(91, 92, 20)
     lineas_acaban_valdecilla = (3, 13, 17)
 
