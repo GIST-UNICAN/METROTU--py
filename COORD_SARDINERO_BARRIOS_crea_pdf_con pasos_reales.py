@@ -292,7 +292,7 @@ def genera_informe(
                     lista_llegadas.append(instante)
             elif parada == parada_salida:
                 
-                if parada_anterior == parada_llegada and row[cols.viaje] > linea_anterior[cols.viaje]: 
+                if parada_anterior == parada_salida and row[cols.viaje] > linea_anterior[cols.viaje]: 
                     print('paso 1'+str(linea))
                     lista_salidas.pop()
                     lista_salidas.append(instante)
