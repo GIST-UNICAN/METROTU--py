@@ -468,7 +468,11 @@ def genera_informe(
                     salidas_valdecilla
                     )
                 )
-
+ #juntamos las líneas 14 y 13 que van hacia lluja porque estan "coordinadas"
+    salidas_valdecilla[13] = sorted(chain(salidas_valdecilla[13],
+                                         salidas_valdecilla[14]))
+    llegadas_valdecilla[13] = sorted(chain(llegadas_valdecilla[13],
+                                          llegadas_valdecilla[14]))
 ##    debug(pretty_output("llegadas_sardinero_ordenadas", salidas_sardinero[100]))
 ##    debug(pretty_output("salidas_sardinero_ordenadas", salidas_sardinero[100]))
 ##    debug(pretty_output("llegadas_valdecilla_ordenadas", salidas_sardinero))
@@ -540,6 +544,8 @@ def genera_informe(
                                          salidas_sardinero[20]))
     llegadas_sardinero[20] = sorted(chain(llegadas_sardinero[9],
                                           llegadas_sardinero[20]))
+    
+   
     llegadas_sardinero[100]=filtra_llegadas(llegadas_sardinero[100])
     for instante_llegada_central in llegadas_sardinero[100]:
         for linea in lineas_acaban_sardinero:
@@ -593,7 +599,7 @@ def genera_informe(
                                      outlayers_time='15 minutes',
                                      tiempo_no_valido="30 minutes",
                                      direccion_centro=False,
-                                     cortes={3: (8,14,19),
+                                     cortes={3: (8,14,20),
                                              17: (8,14,),
                                              8: (8,14,),
                                              9: (8,14,)},
@@ -613,11 +619,11 @@ def genera_informe(
                                                        "y",
                                                        "k")))):
         def media_espera(objeto):
-            return reduce(timedelta.__add__,objeto)/len(objeto)
+            return (reduce(timedelta.__add__,objeto)/len(objeto))-un_minuto
 
         def comprueba_media_mas_50_porciento(row):
 ##            return True
-            return 1 if row['espera']>un_minuto*6 else 0
+            return 1 if row['espera']>un_minuto*0.5 else 0
 #            return 1 if row['espera']>1.5*table_intercambiador_barrios_espera[
 #                'espera'].get(int(row['linea'])) else 0
         
@@ -677,9 +683,9 @@ def genera_informe(
                                 'Línea alternativa',
                                 'Espera alternativa']
                 return (['Conexión',
-                         'Espera Media',
+                         'Tiempo Conexion Medio',
                          'Datos empleados',
-                         'Espera + 6min (4 media + 50%)'],
+                         'Espera ≥ 6min'],
                         ['Conexión',
                          'Línea',
                          'Paso autobús',
@@ -706,9 +712,9 @@ def genera_informe(
                                 'Espera',
                                 '']
                 return (['Conexión',
-                         'Espera Media'
+                         'Tiempo Conexion Medio'
                          ,'Datos empleados',
-                         'Espera + 6min (4 media + 50%)'],
+                         'Espera ≥ 6min'],
                         ['Conexión',
                          'Línea',
                          'Paso autobús',
@@ -777,9 +783,9 @@ def genera_informe(
                              table_intercambiador_barrios_cuenta_50],
                             axis=1).reset_index()
         resultado.columns = ['Conexión',
-                             'Espera Media',
+                             'Tiempo Conexion Medio',
                              'Datos empleados',
-                             'Espera + 6min (4 media + 50%)']
+                             'Espera ≥ 6min']
         resultado_mas_50 = df_interc_barrios[
             df_interc_barrios.espera_mas_50==1]
         #hay que comprobar con estas conexiones perdidas si pudieron coger
@@ -863,7 +869,8 @@ def genera_informe(
                                        titulo,
                                        nombre_foto):
         def formatea_linea(numero, nombre = {3:'Ojaiz línea 3',
-                                             13:'Lluja líneas 13 y 14',
+                                             13:'Lluja 13 y 14',
+                                             14: 'Lluja 14',
                                              17:'Corbán línea 17',
                                              8:'Cueto línea 8',
                                              9: 'Monte linea 9',
