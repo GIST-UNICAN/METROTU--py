@@ -285,19 +285,19 @@ def genera_informe(
             instante.linea=linea
             instante_anterior.linea=linea
             if parada == parada_llegada:
-                if parada_anterior == parada_llegada:
-                    if row[cols.viaje] < linea_anterior[cols.viaje]:
-                        lista_llegadas.pop()
-                    else:
-                        return
-                lista_llegadas.append(instante)
+                if parada_anterior == parada_llegada and row[cols.viaje] < linea_anterior[cols.viaje]:    
+                    lista_llegadas.pop()
+                    lista_llegadas.append(instante)
+                else:
+                    lista_llegadas.append(instante)
             elif parada == parada_salida:
-                if parada_anterior == parada_salida:
-                    if row[cols.viaje] > linea_anterior[cols.viaje]:
-                        lista_salidas.pop()
-                    else:
-                        return
-                lista_salidas.append(instante)
+                
+                if parada_anterior == parada_llegada and row[cols.viaje] > linea_anterior[cols.viaje]: 
+                    print('paso 1'+str(linea))
+                    lista_salidas.pop()
+                    lista_salidas.append(instante)
+                else:
+                    lista_salidas.append(instante)
             linea_anterior=row
             
     lineas_sardinero = (8, 9, 20)
@@ -322,14 +322,9 @@ def genera_informe(
             return Params_proceso_linea(
                     números_de_paradas.Sardinero1,
                     números_de_paradas.Sardinero2,
-                    llegadas_valdecilla[linea],
-                    salidas_valdecilla[linea])   
-        elif linea in (1, 2, 72):
-            return Params_proceso_linea(
-                    números_de_paradas.Sardinero1,
-                    números_de_paradas.Sardinero2,
-                    llegadas_valdecilla[linea],
-                    salidas_valdecilla[linea]) 
+                    llegadas_sardinero[linea],
+                    salidas_sardinero[linea])   
+        
 
 
     for linea_bus, rows in groupby(datos_row,
@@ -376,31 +371,30 @@ def genera_informe(
                     if parada_anterior == números_de_paradas.Avda_Valdecilla:
                         if row[cols.viaje] < linea_anterior[cols.viaje]:
                             llegadas_valdecilla[100].pop()
-                        else:
-                            continue
-                    llegadas_valdecilla[100].append(instante)
-                elif parada==números_de_paradas.Valdecilla1:
-                    if parada_anterior == números_de_paradas.Valdecilla1:
+                            llegadas_valdecilla[100].append(instante)
+                    else:
+                        llegadas_valdecilla[100].append(instante)
+                elif parada==números_de_paradas.Valdecilla:
+                    if parada_anterior == números_de_paradas.Valdecilla:
                         if row[cols.viaje] > linea_anterior[cols.viaje]:
                             salidas_valdecilla[100].pop()
-                        else:
-                            continue
-                    salidas_valdecilla[100].append(instante)
-    ##            if linea==100:
+                            salidas_valdecilla[100].append(instante)
+                    else:
+                        salidas_valdecilla[100].append(instante)
                 elif parada==números_de_paradas.Sardinero:
                     if parada_anterior == números_de_paradas.Sardinero:
                         if row[cols.viaje] < linea_anterior[cols.viaje]:
                             llegadas_sardinero[100].pop()
-                        else:
-                            continue
-                    llegadas_sardinero[100].append(instante)
+                            llegadas_sardinero[100].append(instante)
+                    else:
+                        llegadas_sardinero[100].append(instante)
                 elif parada==números_de_paradas.Sardinero1:
                     if parada_anterior == números_de_paradas.Sardinero1:
                         if row[cols.viaje] > linea_anterior[cols.viaje]:
                             salidas_sardinero[100].pop()
-                        else:
-                            continue
-                    salidas_sardinero[100].append(instante)
+                            salidas_sardinero[100].append(instante)
+                    else:
+                        salidas_sardinero[100].append(instante)
                 linea_anterior=row
         elif linea in resto_lineas:
             linea_anterior = (None,
@@ -441,19 +435,19 @@ def genera_informe(
                     if parada_anterior == números_de_paradas.Sardinero1:
                         if row[cols.viaje] > linea_anterior[cols.viaje]:
                             salidas_sardinero['resto'].pop()
-                        else:
-                            continue
-                    salidas_sardinero['resto'].append(instante)
+                            salidas_sardinero['resto'].append(instante)
+                    else:
+                        salidas_sardinero['resto'].append(instante)
                 elif parada == números_de_paradas.Valdecilla:
                     if parada_anterior == números_de_paradas.Valdecilla:
                         if row[cols.viaje] > linea_anterior[cols.viaje]:
-                            salidas_valdecilla.pop()
-                        else:
-                            continue
-                    salidas_valdecilla['resto'].append(instante)
+                            salidas_valdecilla['resto'].pop()
+                            salidas_valdecilla['resto'].append(instante)
+                    else:
+                        salidas_valdecilla['resto'].append(instante)
                 linea_anterior=row
         elif linea in lineas_intercambiadores:
-            procesa_paradas(linea,
+            procesa_paradas(linea, rows,
                             *get_params_proceso_linea(linea))
 
     lineas_acaban_sardinero = (20, 8) #(91, 92, 20)
