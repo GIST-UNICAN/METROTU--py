@@ -246,11 +246,11 @@ def genera_informe(
 
 
     def procesa_paradas(linea,
+                        rows,
                         parada_llegada,
                         parada_salida,
                         lista_llegadas,
-                        lista_salidas,
-                        rows):
+                        lista_salidas):
         linea_anterior = (None,
                           None,
                           None,
@@ -311,9 +311,7 @@ def genera_informe(
                                          ("parada_llegada",
                                           "parada_salida",
                                           "lista_llegadas",
-                                          "lista_salidas",
-                                          "fila",
-                                          "fila_anterior"))):
+                                          "lista_salidas"))):
         if linea in lineas_valdecilla :
             return Params_proceso_linea(
                     números_de_paradas.Valdecilla,
@@ -353,6 +351,8 @@ def genera_informe(
                               None,
                               None)
             for row in rows:
+                parada = row[cols.parada]
+                parada_anterior = linea_anterior[cols.parada]
                 instante=datetime_gist(row[cols.instante].year,
                                        row[cols.instante].month,
                                        row[cols.instante].day,
@@ -417,6 +417,8 @@ def genera_informe(
                               None,
                               None)
             for row in rows:
+                parada = row[cols.parada]
+                parada_anterior = linea_anterior[cols.parada]
                 instante=datetime_gist(row[cols.instante].year,
                                        row[cols.instante].month,
                                        row[cols.instante].day,
