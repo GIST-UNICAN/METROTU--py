@@ -19,7 +19,6 @@ from functools import partial
 from itertools import starmap, groupby, chain, repeat
 import pandas as pd
 import numpy as np
-import traceback
 from functools import reduce
 import textos_html_informe
 import matplotlib
@@ -28,9 +27,8 @@ import matplotlib.pyplot as plt
 from shutil import copyfile
 from pdfkit import from_file as create_pdf
 from tools import exhaust_map, create_objects, pretty_output
-import horarios
 
-dia_resta = 9
+dia_resta = 3
 # generamos el directorio de salvado
 actual = datetime.now()
 # actual_aux=actual-timedelta(days=1)
