@@ -6,9 +6,7 @@ from sys import stdout
 basicConfig(level=DEBUG)
 # basicConfig(level=DEBUG, filename=, "".join((os.getcwd(),"\\log.txt")))
 
-from openpyxl import Workbook, load_workbook
 from openpyxl.compat import range
-from openpyxl.utils import get_column_letter
 from datetime import timedelta, datetime, time
 import contextlib
 ##import bisect

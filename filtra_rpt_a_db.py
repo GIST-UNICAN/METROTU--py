@@ -66,15 +66,15 @@ def filtra_excel(
                 query_append.append("({},{},{},{},'{}','{}',{},'{}')".format(
                     row[0], row[1], row[4], row[2], row[5], row[3], row[6], row[7]))
 
-                hoja_salida.append(row)
+#                hoja_salida.append(row)
             except ValueError as e:
                 print(e)
                 c_rm += 1
                 print("Row mala")
                 print(row)
                 continue
-    libro_salida.save(
-        os.getcwd() + "\\LINEA{linea}.xlsx".format(linea='112'))
+#    libro_salida.save(
+#        os.getcwd() + "\\LINEA{linea}.xlsx".format(linea='112'))
     querie = "INSERT INTO `pasos_parada` (`Linea`, `Coche`, `Viaje`, `Parada`, `Instante`, `Nombre`, `PSuben`, `Fecha`) VALUES " + str(
         query_append)[1:-1].replace('"', "")
     try:
