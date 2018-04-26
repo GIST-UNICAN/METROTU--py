@@ -612,7 +612,7 @@ def genera_informe(
                                                        "y",
                                                        "k")))):
         def media_espera(objeto):
-            return (reduce(timedelta.__add__, objeto)/len(objeto))-un_minuto
+            return (reduce(timedelta.__add__, objeto)/len(objeto))-un_minuto*0.5
 
         def comprueba_media_mas_50_porciento(row):
             # return True
