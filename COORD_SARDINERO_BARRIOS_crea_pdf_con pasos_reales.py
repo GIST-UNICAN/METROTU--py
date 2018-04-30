@@ -952,4 +952,11 @@ def genera_informe(
 
 
 if __name__ == "__main__":
-    genera_informe()
+    inicio=datetime(2018,4,11,0,0,0)
+    fin=datetime(2018,4,14,0,0,0)
+    while inicio<fin:
+        if inicio.weekday()<5:
+            genera_informe(fecha_inicio=inicio+timedelta(hours=6),fecha_fin=inicio+timedelta(hours=23))
+            inicio=inicio+timedelta(days=1)
+        else:
+            inicio=inicio+timedelta(days=1)
