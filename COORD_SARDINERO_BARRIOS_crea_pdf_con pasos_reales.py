@@ -26,7 +26,7 @@ from shutil import copyfile
 from pdfkit import from_file as create_pdf
 from tools import exhaust_map, create_objects, pretty_output
 
-dia_resta = 1
+dia_resta = 3
 # generamos el directorio de salvado
 actual = datetime.now()
 # actual_aux=actual-timedelta(days=1)
