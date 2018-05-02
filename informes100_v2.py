@@ -25,6 +25,7 @@ from pdfkit import from_file as create_pdf
 import contextlib
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from bisect import bisect
 
 from tools.text_and_output import pretty_debug
@@ -42,6 +43,9 @@ tamaño_correcto_tupla_sardi_valde = 8
 lista_dias = (23, 24, 25, 26, 27)
 
 intervalos_horarios = (0, 6, 9, 12, 15, 18, 21, 24)
+
+distancia_valdecilla_sardinero=(0,900,2000,2350,2600,3050,3350,4400,5000)
+distancia_sardinero_valdecilla=(0,800,1900,2400,2750,3050,3950,5000)
 
 querie = ("create temporary table t1 as (select * from pasos_parada where "
           " fecha between '{0}-{1}-{2}' and '{3}-{4}-{5}' and linea=100) ".format(
@@ -156,12 +160,12 @@ paradas_a_sardinero = (paradas.Valdecilla, paradas.San_Fernando,
                        paradas.Casimiro_Sainz_6,
                        paradas.Ies_Llamas, paradas.Int_Sardinero)
 
-paradas_a_sardinero_nombres = ("", "Valdecilla",
+paradas_a_sardinero_nombres = ("Valdecilla",
                                "San_Fernando", "Jesus_Monasterio_7",
                                "Correos_plaza", "Jardines_Pereda",
                                "Puerto_Chico", "Casimiro_Sainz_6", "Ies_Llamas",
                                "Int_Sardinero")
-paradas_a_valdecilla_nombres = ("", "Int_Sardinero_1",
+paradas_a_valdecilla_nombres = ("Int_Sardinero_1",
                                 "Vega_Lamera", "Casimiro_Sainz_15",
                                 "Paseo_Pereda", "Correos", "Pza_Ayto",
                                 "San_Fernando_22", "Avenida_Valdecilla")
@@ -228,11 +232,11 @@ for coche, valores in viajes_ordenado_filtrado.items():
         #        inicia_plot = True
         tamaño = tamaño_correcto_tupla_valde_sardi if sentido == 'Valdecilla_Sardinero' else tamaño_correcto_tupla_sardi_valde
         nombres = paradas_a_sardinero_nombres if sentido == 'Valdecilla_Sardinero' else paradas_a_valdecilla_nombres
-
+        distancias = distancia_valdecilla_sardinero if sentido == 'Valdecilla_Sardinero' else distancia_sardinero_valdecilla
         # hay que dividir los viajes si son muchos para que se pinten en grupos más pequeños y se vea mejor
         for grupo_hora, valores3 in valores2.items():
             inicia_plot = True
-            num_grafica = 0
+            num_grafica = 1
             for dia, valores4 in valores3.items():
 
                 df = pd.DataFrame.from_dict(
@@ -240,24 +244,29 @@ for coche, valores in viajes_ordenado_filtrado.items():
                 if df.empty:
                     continue
                 else:
+                    
                     color = colores[lista_dias.index(dia)]
     #                handles.append(str(dia))
-                    df['paradas'] = list(range(tamaño))
+                    df['paradas'] = distancias
                     df2 = df
                     #df['pasos_parada']=df.apply(tuple, axis=1)
                     columnas = list(df.columns.values)
         #            ax = df.plot(x=columnas[0], y='paradas',
         #                         label='Viaje {}'.format(str(columnas[0])), figsize=(20, 10))
                     if inicia_plot:
-                        ax = df.plot(x=columnas[0], y='paradas',
-                                     color=color, legend=False)
+                        texto_label= f"Dia {dia} viaje {columnas[0]}"
+                        ax = df.plot(x=columnas[0], y=columnas[-1],
+                                     color=color, label=texto_label)
                         inicia_plot = False
                     else:
-                        df.plot(x=columnas[0], y='paradas',
-                                ax=ax, color=color,  legend=False)
+                        texto_label= f"Dia {dia} viaje {columnas[0]}"
+                        df.plot(x=columnas[0], y=columnas[-1],
+                                ax=ax, color=color,  label=texto_label)
                     for viaje in columnas[1:-1]:
-                        df.plot(x=viaje, y='paradas', ax=ax,
-                                color=color, legend=False)
+                        texto_label= f"Dia {dia} viaje {viaje}"
+                        df.plot(x=viaje, y=columnas[-1], ax=ax,
+                                color=color, label=texto_label)
+                    ax.set_yticks(distancias)
                     ax.set_yticklabels(nombres)
                     ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
                     titulo = 'Coche {} sentido {} grafica {}'.format(
@@ -266,6 +275,9 @@ for coche, valores in viajes_ordenado_filtrado.items():
                         str(num_grafica))
                     num_grafica += 1
                     ax.set_title(titulo, color='black')
+                    ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                    ax.set_ylim([0,5000])
+                    ax.grid()
                     fig = ax.get_figure()
                     fig.savefig(
                         directorio+'coche_{}_sentido_{}_grafica_{}.png'.format(
