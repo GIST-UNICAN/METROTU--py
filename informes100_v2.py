@@ -4,10 +4,13 @@ Created on Thu Apr 26 10:09:27 2018
 
 @author: Andres
 """
+from logging import basicConfig, DEBUG
+basicConfig(level=DEBUG)
+
 import MySQLdb
 from datetime import datetime, timedelta
 import os
-from tools import exhaust_map
+
 from collections import namedtuple, defaultdict, OrderedDict
 from itertools import starmap, groupby, chain, repeat
 import pandas as pd
@@ -24,6 +27,8 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from bisect import bisect
 
+from tools.text_and_output import pretty_debug
+from tools.general import exhaust_map
 # necesitamos traer de la db los datos de la linea 100
 actual = datetime.now()
 dia_resta = 5
@@ -91,12 +96,15 @@ colores = ("b",
 
 def filtro_valdecilla_sardinero(clave_lista,
                                 tamaño_correcto_tupla_valde_sardi=tamaño_correcto_tupla_valde_sardi):
-    return tamaño_correcto_tupla_valde_sardi != len(clave_lista)
+    return (tamaño_correcto_tupla_valde_sardi != len(clave_lista)
+            # Comprobamos que la lista sea creciente.
+            or any(a > b for a, b in zip(clave_lista[:-1], clave_lista[1:])))
 
 
 def filtro_sardinero_valdecilla(clave_lista,
                                 tamaño_correcto_tupla_sardi_valde=tamaño_correcto_tupla_sardi_valde):
-    return tamaño_correcto_tupla_sardi_valde != len(clave_lista)
+    return (tamaño_correcto_tupla_sardi_valde != len(clave_lista)
+            or any(a > b for a, b in zip(clave_lista[:-1], clave_lista[1:])))
 
 
 def normaliza_fecha(fecha):
@@ -204,13 +212,12 @@ for key, d1 in viajes_ordenado.items():
         for grupo_hora, d3 in d2.items():
             for dia, d4 in d3.items():
                 for viaje, lista in d4.items():
-                    if sentido=='Valdecilla_Sardinero':
+                    if sentido == 'Valdecilla_Sardinero':
                         if filtro_valdecilla_sardinero(lista):
                             del viajes_ordenado_filtrado[key][sentido][grupo_hora][dia][viaje]
-                    elif sentido==  'Sardinero_Valdecilla':
+                    elif sentido == 'Sardinero_Valdecilla':
                         if filtro_sardinero_valdecilla(lista):
                             del viajes_ordenado_filtrado[key][sentido][grupo_hora][dia][viaje]
-
 
 
 # montamos otro diccionario mas cocreto con los distintos df a pintar
@@ -218,15 +225,16 @@ for coche, valores in viajes_ordenado_filtrado.items():
     if coche != 1:
         continue
     for sentido, valores2 in valores.items():
-
+        #        inicia_plot = True
         tamaño = tamaño_correcto_tupla_valde_sardi if sentido == 'Valdecilla_Sardinero' else tamaño_correcto_tupla_sardi_valde
         nombres = paradas_a_sardinero_nombres if sentido == 'Valdecilla_Sardinero' else paradas_a_valdecilla_nombres
-        
+
         # hay que dividir los viajes si son muchos para que se pinten en grupos más pequeños y se vea mejor
         for grupo_hora, valores3 in valores2.items():
             inicia_plot = True
+            num_grafica = 0
             for dia, valores4 in valores3.items():
-                
+
                 df = pd.DataFrame.from_dict(
                     viajes_ordenado_filtrado[coche][sentido][grupo_hora][dia], orient='columns', dtype=None)
                 if df.empty:
@@ -245,14 +253,22 @@ for coche, valores in viajes_ordenado_filtrado.items():
                                      color=color, legend=False)
                         inicia_plot = False
                     else:
-                        df.plot(x=columnas[0], y='paradas', ax=ax, color=color,  legend=False)
+                        df.plot(x=columnas[0], y='paradas',
+                                ax=ax, color=color,  legend=False)
                     for viaje in columnas[1:-1]:
                         df.plot(x=viaje, y='paradas', ax=ax,
                                 color=color, legend=False)
                     ax.set_yticklabels(nombres)
                     ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
-                    titulo = 'Coche {} sentido {}'.format(str(coche), sentido)
+                    titulo = 'Coche {} sentido {} grafica {}'.format(
+                        str(coche),
+                        sentido,
+                        str(num_grafica))
+                    num_grafica += 1
                     ax.set_title(titulo, color='black')
                     fig = ax.get_figure()
                     fig.savefig(
-                        directorio+'coche_{}_sentido_{}.png'.format(str(coche), sentido))
+                        directorio+'coche_{}_sentido_{}_grafica_{}.png'.format(
+                            str(coche),
+                            sentido,
+                            str(num_grafica)))
