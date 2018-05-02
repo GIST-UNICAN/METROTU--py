@@ -26,9 +26,9 @@ from shutil import copyfile
 from pdfkit import from_file as create_pdf
 from tools import exhaust_map, create_objects, pretty_output
 
-dia_resta = 3
+dia_resta = 0
 # generamos el directorio de salvado
-actual = datetime.now()
+actual = datetime.now()-timedelta(days=2)
 # actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
 # for actual in lista_dias:
@@ -609,6 +609,7 @@ def genera_informe(
                                                        "m",
                                                        "y",
                                                        "k")))):
+        print(trayecto)
         def media_espera(objeto):
             return (reduce(timedelta.__add__, objeto)/len(objeto))-un_minuto*0.5
 
@@ -952,11 +953,12 @@ def genera_informe(
 
 
 if __name__ == "__main__":
-    inicio=datetime(2018,4,11,0,0,0)
-    fin=datetime(2018,4,14,0,0,0)
-    while inicio<fin:
-        if inicio.weekday()<5:
-            genera_informe(fecha_inicio=inicio+timedelta(hours=6),fecha_fin=inicio+timedelta(hours=23))
-            inicio=inicio+timedelta(days=1)
-        else:
-            inicio=inicio+timedelta(days=1)
+    genera_informe()
+#    inicio=datetime(2018,4,11,0,0,0)
+#    fin=datetime(2018,4,14,0,0,0)
+#    while inicio<fin:
+#        if inicio.weekday()<5:
+#            genera_informe(fecha_inicio=inicio+timedelta(hours=6),fecha_fin=inicio+timedelta(hours=23))
+#            inicio=inicio+timedelta(days=1)
+#        else:
+#            inicio=inicio+timedelta(days=1)
