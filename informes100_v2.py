@@ -27,9 +27,12 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from bisect import bisect
-
+import operator
 from tools.text_and_output import pretty_debug
 from tools.general import exhaust_map
+
+
+
 # necesitamos traer de la db los datos de la linea 100
 actual = datetime.now()
 dia_resta = 5
@@ -43,9 +46,11 @@ tamaño_correcto_tupla_sardi_valde = 8
 lista_dias = (23, 24, 25, 26, 27)
 
 intervalos_horarios = (0, 6, 9, 12, 15, 18, 21, 24)
+#intervalos_horarios = (0, 24)
 
-distancia_valdecilla_sardinero=(0,900,2000,2350,2600,3050,3350,4400,5000)
-distancia_sardinero_valdecilla=(0,800,1900,2400,2750,3050,3950,5000)
+distancia_valdecilla_sardinero = (
+    0, 900, 2000, 2350, 2600, 3050, 3350, 4400, 5000)
+distancia_sardinero_valdecilla = (0, 800, 1900, 2400, 2750, 3050, 3950, 5000)
 
 querie = ("create temporary table t1 as (select * from pasos_parada where "
           " fecha between '{0}-{1}-{2}' and '{3}-{4}-{5}' and linea=100) ".format(
@@ -102,13 +107,13 @@ def filtro_valdecilla_sardinero(clave_lista,
                                 tamaño_correcto_tupla_valde_sardi=tamaño_correcto_tupla_valde_sardi):
     return (tamaño_correcto_tupla_valde_sardi != len(clave_lista)
             # Comprobamos que la lista sea creciente.
-            or any(a > b for a, b in zip(clave_lista[:-1], clave_lista[1:])))
+            or any(a >= b for a, b in zip(clave_lista[:-1], clave_lista[1:])))
 
 
 def filtro_sardinero_valdecilla(clave_lista,
                                 tamaño_correcto_tupla_sardi_valde=tamaño_correcto_tupla_sardi_valde):
     return (tamaño_correcto_tupla_sardi_valde != len(clave_lista)
-            or any(a > b for a, b in zip(clave_lista[:-1], clave_lista[1:])))
+            or any(a >= b for a, b in zip(clave_lista[:-1], clave_lista[1:])))
 
 
 def normaliza_fecha(fecha):
@@ -227,60 +232,89 @@ for key, d1 in viajes_ordenado.items():
 # montamos otro diccionario mas cocreto con los distintos df a pintar
 for coche, valores in viajes_ordenado_filtrado.items():
     if coche != 1:
-        continue
+        pass
     for sentido, valores2 in valores.items():
+        if sentido == 'Valdecilla_Sardinero':
+            continue
         #        inicia_plot = True
+        sentido_opuesto = 'Sardinero_Valdecilla' if sentido == 'Valdecilla_Sardinero' else 'Valdecilla_Sardinero'
         tamaño = tamaño_correcto_tupla_valde_sardi if sentido == 'Valdecilla_Sardinero' else tamaño_correcto_tupla_sardi_valde
+        tamaño_opuesto = tamaño_correcto_tupla_sardi_valde if sentido == 'Valdecilla_Sardinero' else tamaño_correcto_tupla_valde_sardi
         nombres = paradas_a_sardinero_nombres if sentido == 'Valdecilla_Sardinero' else paradas_a_valdecilla_nombres
+        nombres_opuesto = paradas_a_valdecilla_nombres if sentido == 'Valdecilla_Sardinero' else paradas_a_sardinero_nombres
         distancias = distancia_valdecilla_sardinero if sentido == 'Valdecilla_Sardinero' else distancia_sardinero_valdecilla
+        distancias_opuesto = distancia_sardinero_valdecilla if sentido == 'Valdecilla_Sardinero' else distancia_valdecilla_sardinero
         # hay que dividir los viajes si son muchos para que se pinten en grupos más pequeños y se vea mejor
-        for grupo_hora, valores3 in valores2.items():
+        num_grafica = 0
+        for grupo_hora, valores3 in sorted(valores2.items(),key=operator.itemgetter(0)):
             inicia_plot = True
-            num_grafica = 1
+            num_grafica +=1
             for dia, valores4 in valores3.items():
 
                 df = pd.DataFrame.from_dict(
                     viajes_ordenado_filtrado[coche][sentido][grupo_hora][dia], orient='columns', dtype=None)
-                if df.empty:
+                df2 = pd.DataFrame.from_dict(
+                    viajes_ordenado_filtrado[coche][sentido_opuesto][grupo_hora][dia], orient='columns', dtype=None)
+                if df.empty or df2.empty:
                     continue
                 else:
-                    
+
                     color = colores[lista_dias.index(dia)]
     #                handles.append(str(dia))
                     df['paradas'] = distancias
-                    df2 = df
+                    df2['paradas'] = list(5000-x for x in distancias_opuesto)
                     #df['pasos_parada']=df.apply(tuple, axis=1)
                     columnas = list(df.columns.values)
+                    columnas_opuesto = list(df2.columns.values)
         #            ax = df.plot(x=columnas[0], y='paradas',
         #                         label='Viaje {}'.format(str(columnas[0])), figsize=(20, 10))
                     if inicia_plot:
-                        texto_label= f"Dia {dia} viaje {columnas[0]}"
-                        ax = df.plot(x=columnas[0], y=columnas[-1],
-                                     color=color, label=texto_label)
+                        texto_label = f"Dia {dia} viaje {columnas[0]}"
+                        ax = df.plot(x=columnas[0], y='paradas',
+                                     color=color, label=texto_label, figsize=(15, 10))
+                        ax2 = ax.twinx()
+                        texto_label = f"Dia {dia} viaje {columnas_opuesto[0]}"
+                        df2.plot(x=columnas_opuesto[0], y='paradas', ax=ax2,
+                                 color=color, label=texto_label)
                         inicia_plot = False
                     else:
-                        texto_label= f"Dia {dia} viaje {columnas[0]}"
-                        df.plot(x=columnas[0], y=columnas[-1],
+                        texto_label = f"Dia {dia} viaje {columnas[0]}"
+                        df.plot(x=columnas[0], y='paradas',
                                 ax=ax, color=color,  label=texto_label)
+                        texto_label = f"Dia {dia} viaje {columnas_opuesto[0]}"
+                        df2.plot(x=columnas_opuesto[0], y='paradas', ax=ax2,
+                                 color=color, label=texto_label)
                     for viaje in columnas[1:-1]:
-                        texto_label= f"Dia {dia} viaje {viaje}"
-                        df.plot(x=viaje, y=columnas[-1], ax=ax,
+                        texto_label = f"Dia {dia} viaje {viaje}"
+                        df.plot(x=viaje, y='paradas', ax=ax,
                                 color=color, label=texto_label)
+                    for viaje in columnas_opuesto[1:-1]:
+                        texto_label = f"Dia {dia} viaje {columnas_opuesto[0]}"
+                        df2.plot(x=viaje, y='paradas', ax=ax2,
+                                 color=color, label=texto_label)
+#                    se crea el dibujo para la vuelta en el otro eje
+
                     ax.set_yticks(distancias)
                     ax.set_yticklabels(nombres)
-                    ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+                    ax2.set_yticks(list(5000-x for x in distancias_opuesto))
+                    ax2.set_yticklabels(nombres_opuesto)
+                    
                     titulo = 'Coche {} sentido {} grafica {}'.format(
                         str(coche),
                         sentido,
                         str(num_grafica))
-                    num_grafica += 1
                     ax.set_title(titulo, color='black')
                     ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-                    ax.set_ylim([0,5000])
+                    ax.set_ylim([0, 5000])
+                    ax2.set_ylim([0, 5000])
+                    ax.legend(loc='center left', bbox_to_anchor=(1.15, 0.5))
+                    lgd=ax2.legend(loc='center left', bbox_to_anchor=(1.3, 0.5))
                     ax.grid()
+                    ax2.grid()
                     fig = ax.get_figure()
                     fig.savefig(
                         directorio+'coche_{}_sentido_{}_grafica_{}.png'.format(
                             str(coche),
                             sentido,
-                            str(num_grafica)))
+                            str(num_grafica)),
+                                bbox_extra_artists=(lgd,), bbox_inches='tight')
