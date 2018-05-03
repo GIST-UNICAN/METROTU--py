@@ -24,11 +24,12 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from shutil import copyfile
 from pdfkit import from_file as create_pdf
-from tools import exhaust_map, create_objects, pretty_output
+from tools.general import exhaust_map, create_objects 
+from tools.text_and_output import pretty_output
 
 dia_resta = 0
 # generamos el directorio de salvado
-actual = datetime.now()-timedelta(days=2)
+actual = datetime.now()-timedelta(days=1)
 # actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
 # for actual in lista_dias:

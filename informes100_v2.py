@@ -8,7 +8,7 @@ from logging import basicConfig, DEBUG
 basicConfig(level=DEBUG)
 
 import MySQLdb
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import os
 
 from collections import namedtuple, defaultdict, OrderedDict
@@ -16,7 +16,7 @@ from itertools import starmap, groupby, chain, repeat
 import pandas as pd
 import numpy as np
 from functools import reduce
-import textos_html_informe
+import textos_html_informe_100
 import matplotlib
 matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
@@ -30,10 +30,14 @@ from bisect import bisect
 import operator
 from tools.text_and_output import pretty_debug
 from tools.general import exhaust_map
-
+from shutil import copyfile
+import locale
+from pdfkit import from_file as create_pdf
 
 
 # necesitamos traer de la db los datos de la linea 100
+locale.setlocale(locale.LC_ALL, '')
+cuerpo_informe = ""
 actual = datetime.now()
 dia_resta = 5
 dia_inicio = actual-timedelta(days=(dia_resta+6))
@@ -43,8 +47,15 @@ un_minuto = timedelta(minutes=1)
 tamaño_correcto_tupla_valde_sardi = 9
 tamaño_correcto_tupla_sardi_valde = 8
 
-lista_dias = (23, 24, 25, 26, 27)
+dia_control = dia_inicio
+un_dia = timedelta(days=1)
+lista_dias = []
+while dia_control <= dia_fin:
+    if dia_control.weekday() < 5:
+        lista_dias.append(dia_control.day)
+    dia_control += un_dia
 
+print(lista_dias)
 intervalos_horarios = (0, 6, 9, 12, 15, 18, 21, 24)
 #intervalos_horarios = (0, 24)
 
@@ -86,9 +97,12 @@ querie_cabeceras = ("SELECT coche, viaje, Parada, Instante from "
                     "order by coche, viaje ").format(actual.year,
                                                      actual.month,
                                                      actual.day-dia_resta)
-directorio = "informe_lcentral_{}{}{}/".format(actual.year,
-                                               actual.month,
-                                               actual.day-dia_resta)
+directorio = "informe_lcentral_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
+                                                            dia_inicio.month,
+                                                            dia_inicio.day,
+                                                            dia_fin.year,
+                                                            dia_fin.month,
+                                                            dia_fin.day)
 archivo = "{}{}{}".format(actual.year,
                           actual.month,
                           actual.day-dia_resta)
@@ -122,6 +136,10 @@ def normaliza_fecha(fecha):
 
 def devuelve_intervalo(datetime, intervalos_horarios=intervalos_horarios):
     return bisect(intervalos_horarios, datetime.hour)
+
+
+def mes_letra(mes):
+    return date(1900, mes, 1).strftime('%B')
 
 
 if os.path.exists(directorio):
@@ -246,9 +264,9 @@ for coche, valores in viajes_ordenado_filtrado.items():
         distancias_opuesto = distancia_sardinero_valdecilla if sentido == 'Valdecilla_Sardinero' else distancia_valdecilla_sardinero
         # hay que dividir los viajes si son muchos para que se pinten en grupos más pequeños y se vea mejor
         num_grafica = 0
-        for grupo_hora, valores3 in sorted(valores2.items(),key=operator.itemgetter(0)):
+        for grupo_hora, valores3 in sorted(valores2.items(), key=operator.itemgetter(0)):
             inicia_plot = True
-            num_grafica +=1
+            num_grafica += 1
             for dia, valores4 in valores3.items():
 
                 df = pd.DataFrame.from_dict(
@@ -292,29 +310,93 @@ for coche, valores in viajes_ordenado_filtrado.items():
                         texto_label = f"Dia {dia} viaje {columnas_opuesto[0]}"
                         df2.plot(x=viaje, y='paradas', ax=ax2,
                                  color=color, label=texto_label)
-#                    se crea el dibujo para la vuelta en el otro eje
+# se crea el dibujo para la vuelta en el otro eje
 
                     ax.set_yticks(distancias)
                     ax.set_yticklabels(nombres)
                     ax2.set_yticks(list(5000-x for x in distancias_opuesto))
                     ax2.set_yticklabels(nombres_opuesto)
-                    
-                    titulo = 'Coche {} sentido {} grafica {}'.format(
+
+                    titulo = 'Coche {} grafica {}'.format(
                         str(coche),
-                        sentido,
                         str(num_grafica))
                     ax.set_title(titulo, color='black')
                     ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
                     ax.set_ylim([0, 5000])
                     ax2.set_ylim([0, 5000])
                     ax.legend(loc='center left', bbox_to_anchor=(1.15, 0.5))
-                    lgd=ax2.legend(loc='center left', bbox_to_anchor=(1.3, 0.5))
+                    lgd = ax2.legend(loc='center left',
+                                     bbox_to_anchor=(1.3, 0.5))
                     ax.grid()
                     ax2.grid()
                     fig = ax.get_figure()
-                    fig.savefig(
-                        directorio+'coche_{}_sentido_{}_grafica_{}.png'.format(
-                            str(coche),
-                            sentido,
-                            str(num_grafica)),
-                                bbox_extra_artists=(lgd,), bbox_inches='tight')
+                    figura_ruta_relativa = 'coche_{}_grafica_{}.png'.format(
+                        str(coche),
+                        str(num_grafica))
+                    figura_ruta = directorio+figura_ruta_relativa
+            fig.savefig(
+                figura_ruta,
+                bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+            cuerpo_informe = "".join((cuerpo_informe,
+                                      textos_html_informe_100.apartado_informe.format(
+                                          titulo=titulo,
+                                          grafico=figura_ruta_relativa)))
+
+# una vez obtenidas las gráficas habría que sacar unas tablas de desviación media
+columnas = ['sentido', 'coche', 'dia', 'viaje', 'tv', 'v_comercial']
+columnas_mostrar_final = ['coche', 'sentido', 'viaje', 'media tiempo viaje (minutos)',
+                          'media velocidad comercial (km/h)', 'desviación tiempo viaje',
+                          'desviación velocidad comercial']
+df_mean = pd.DataFrame(columns=columnas)
+for coche, valores in viajes_ordenado_filtrado.items():
+    for sentido, valores2 in valores.items():
+        for grupo_hora, valores3 in sorted(valores2.items(), key=operator.itemgetter(0)):
+            for dia, valores4 in valores3.items():
+                for viaje, valores5 in valores4.items():
+                    tv = sorted(valores5)[-1]-sorted(valores5)[0]
+                    v = 3.6*5000/tv.seconds
+                    df_mean.loc[len(df_mean)] = [
+                        sentido, coche, dia, viaje, tv, v]
+# creado el df hay que hacer una pivot table para agregar los datos
+
+df_mean['tv_minutes'] = df_mean['tv'].apply(lambda x: x.seconds/60)
+
+pivot_table = pd.pivot_table(df_mean, values=['v_comercial', 'tv_minutes'],
+                             index=['coche', 'sentido', 'viaje'],
+                             aggfunc=[np.mean, np.std])
+pivot_table.reset_index(inplace=True)
+pivot_table.columns = columnas_mostrar_final
+pivot_table.sort_values(['coche', 'viaje'], inplace=True)
+pivot_table.to_csv(
+    path_or_buf=R"C:\GITHUB - SYNC\METROTU--py\CENTRAL-CSV\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
+                                                                                       dia_inicio.month,
+                                                                                       dia_inicio.day,
+                                                                                       dia_fin.year,
+                                                                                       dia_fin.month,
+                                                                                       dia_fin.day))
+tabla_html = pivot_table.to_html(classes='paleBlueRows',
+                                 columns=columnas_mostrar_final, index=False,
+                                 justify='center')
+# se añade al cuerpo del informe
+cuerpo_informe = "".join((cuerpo_informe,
+                          textos_html_informe_100.apartado_informe_tabla.format(
+                              tabla=tabla_html)))
+
+# se genera un informe de este tipo
+with open(directorio+'informe.html', 'w') as file:
+    print(textos_html_informe_100.plantilla_web_estilos +
+          textos_html_informe_100.plantilla_web_cuerpo.format(
+              dia_inicio=dia_inicio.day,
+              dia_fin=dia_fin.day,
+              mes_inicio=mes_letra(dia_inicio.month),
+              mes_fin=mes_letra(dia_fin.month),
+              informe_completo=cuerpo_informe), file=file)
+    create_pdf(
+        directorio+'informe.html',
+        directorio+'{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
+                                                     dia_inicio.month,
+                                                     dia_inicio.day,
+                                                     dia_fin.year,
+                                                     dia_fin.month,
+                                                     dia_fin.day))
