@@ -29,11 +29,12 @@ año_desde = 2018
 año_hasta = 2018
 mes_desde = 4
 mes_hasta = 4
-dia_inicio = 23
-dia_fin = 27
+dia_inicio = 16
+dia_fin = 20
 dia_desde = int("".join((str(año_desde), str(mes_desde), str(dia_inicio))))
 dia_hasta = int("".join((str(año_hasta), str(mes_hasta), str(dia_fin))))
 dias = list(range(dia_desde, dia_hasta+1, 1))
+dias.append('1990199')
 dias = list(map(str, dias))
 cortes = {3: (8, 14, 20), 17: (8, 14), 8: (8, 14), 9: (8, 14)}
 cuerpo_informe = ""
@@ -43,7 +44,10 @@ def devuelve_color():
     for color in ("b", "g", "r", "c", "g", "m", "y", "k"):
         yield color
 
-
+def devuelve_estilo():
+    for color in ("--", "-", "-", "-", "-", "-", "-", "-"):
+        yield color
+        
 def mes_letra(mes):
     return date(1900, mes, 1).strftime('%B')
 
@@ -57,7 +61,11 @@ for nombre in recorridos:
     lista_df_sentido = list()
     for file in lista_archivos[nombre]:
         df = pd.read_csv(file)
-        df['dia'] = pd.DatetimeIndex(df['salida']).day
+        if '1990199' in file:
+            df['dia'] = 'teorico'
+        else:
+            df['dia'] = pd.DatetimeIndex(df['salida']).day
+                
         lista_df_sentido.append(df)
     lista_df[nombre] = pd.concat(lista_df_sentido)
 diccionario_linea_sentido = defaultdict(lambda: defaultdict(list))
@@ -85,7 +93,7 @@ for sentido in diccionario_linea_sentido.keys():
         handles = []
         labels = []
         colores = devuelve_color()
-        colores2 = devuelve_color()
+        estilos = devuelve_estilo()
         if linea in cortes:
             #            print("SENTIDO: "+sentido+" LINEA: "+str(linea)+" esta en cortes: ")
             horas_corte = chain(cortes[linea], (24,))
@@ -103,10 +111,11 @@ for sentido in diccionario_linea_sentido.keys():
                 y_s = (g["espera minutos"] for g in grupos)
                 #dias = (g["dia"] for g in grupos)
                 color = next(colores)
-                color2 = next(colores2)
+                estilo = next(estilos)
                 for x, y in zip(x_s, y_s):
-                    plt.scatter(x, y, color=color)
-                    handle, = plt.plot(x, y, color=color2)
+                    if str(df_dia["dia"].iloc[0]) !='teorico':
+                        plt.scatter(x, y, color=color)
+                    handle, = plt.plot(x, y, color=color, linestyle= estilo)
                 handles.append(handle)
                 labels.append(str(df_dia["dia"].iloc[0]))
         else:
@@ -115,8 +124,11 @@ for sentido in diccionario_linea_sentido.keys():
             y_s = (df_dia["espera minutos"] for df_dia in lista_dataframe)
             dias = (df_dia["dia"] for df_dia in lista_dataframe)
             for x, y, dia in zip(x_s, y_s, dias):
-                plt.scatter(x, y, color=next(colores))
-                handle, = plt.plot(x, y, color=next(colores2))
+                color=next(colores)
+                if dia.tolist()[0] != 'teorico':
+                    plt.scatter(x, y, color=color)
+                
+                handle, = plt.plot(x, y, color=color, linestyle= next(estilos))
                 handles.append(handle)
                 labels.append(dia.tolist()[0])
 

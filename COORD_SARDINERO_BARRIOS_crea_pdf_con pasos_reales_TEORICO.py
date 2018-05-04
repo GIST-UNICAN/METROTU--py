@@ -29,7 +29,7 @@ from tools.text_and_output import pretty_output
 
 dia_resta = 0
 # generamos el directorio de salvado
-actual = datetime.now()-timedelta(days=7)
+actual = datetime.now()+timedelta(days=17)
 # actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
 # for actual in lista_dias:
@@ -956,8 +956,8 @@ def genera_informe(
 
 if __name__ == "__main__":
     genera_informe()
-#    inicio=datetime(2018,4,13,0,0,0)
-#    fin=datetime(2018,5,1,0,0,0)
+#    inicio=datetime(2018,4,11,0,0,0)
+#    fin=datetime(2018,4,14,0,0,0)
 #    while inicio<fin:
 #        if inicio.weekday()<5:
 #            genera_informe(fecha_inicio=inicio+timedelta(hours=6),fecha_fin=inicio+timedelta(hours=23))

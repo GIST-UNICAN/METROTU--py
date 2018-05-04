@@ -29,7 +29,7 @@ def slices(
 
 
 def insertarHoraTeorica(fila):
-    fecha = fila[5].replace(day=21, hour=0, minute=0, second=0, microsecond=0)
+    fecha = fila[5].replace(year=1990, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     query_append.append("({},{},{},{},'{}','{}',{},'{}',{},{})".format(
         fila[0], fila[1], fila[4], fila[3], fila[5], 'None', 0, fecha, 2, fila[2]))
 
@@ -62,7 +62,7 @@ def filtra_excel(
                 else:
                     row[5] = datetime.strptime(
                         str(row[5]), "%Y-%m-%d %H:%M:%S.%f")  # href
-                    row[5].replace(day=21)
+                    row[5]=row[5].replace(year=1990, month=1, day=1)
                 if row[6] == 'NULL':
                     row[6] = 'Null'
                 else:
@@ -129,5 +129,5 @@ def filtra_excel(
 
 
 filtra_excel(
-    r"D:\Users\Andres\OneDrive\OneDrive - Universidad de Cantabria\Recordar GIST - VARIOS\datos_tus\teor.rpt"
+    r"D:\Users\Andres\OneDrive\OneDrive - Universidad de Cantabria\Recordar GIST - VARIOS\datos_tus\108.rpt"
 )
