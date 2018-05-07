@@ -397,7 +397,7 @@ with open(directorio+'informe.html', 'w') as file:
               informe_completo=cuerpo_informe), file=file)
     create_pdf(
         directorio+'informe.html',
-        directorio+'{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
+        directorio+'linea_central_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
                                                      dia_inicio.month,
                                                      dia_inicio.day,
                                                      dia_fin.year,

@@ -16,6 +16,7 @@ from itertools import chain
 import textos_html_informe_semanal
 from shutil import copyfile
 import locale
+import collections
 from pdfkit import from_file as create_pdf
 
 
@@ -27,6 +28,7 @@ lista_df = dict()
 lineas = (3, 8, 9, 13, 14, 17, 20)
 
 cortes = {3: (8, 14, 20), 17: (8, 14), 8: (8, 14), 9: (8, 14)}
+
 cuerpo_informe = ""
 
 actual = datetime.now()
@@ -50,7 +52,7 @@ while dia_control <= dia_fin:
 lista_dias.append(datetime(1990,1,1,0,0,0))
 
 def devuelve_color():
-    for color in ("b", "g", "r", "c", "g", "m", "y", "k"):
+    for color in ("b", "g", "r", "c", "m", "y", "y", "k"):
         yield color
 
 
@@ -98,7 +100,7 @@ else:
 copyfile('tabla.css', directorio+'tabla.css')
 # se pintan las gráficas y se guardan
 for sentido in diccionario_linea_sentido.keys():
-    for linea, lista_dataframe in diccionario_linea_sentido[sentido].items():
+    for linea, lista_dataframe in collections.OrderedDict(sorted(diccionario_linea_sentido[sentido].items())).items():
         #        print("SENTIDO: "+sentido+" LINEA: "+str(linea)+" DIAS: "+str(len(lista_dataframe)))
         fig = plt.figure(figsize=(10, 5))
         ax = plt.gca()
@@ -169,5 +171,5 @@ with open(directorio+'\\'+'informe.html', 'w') as file:
               informe_completo=cuerpo_informe), file=file)
     create_pdf(
         directorio+'\\'+'informe.html',
-        directorio+'\\'+'{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year, dia_inicio.month, dia_inicio.day,
+        directorio+'\\'+'resumen_semanal_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year, dia_inicio.month, dia_inicio.day,
                                                           dia_fin.year, dia_fin.month, dia_fin.day))
