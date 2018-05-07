@@ -39,7 +39,7 @@ from pdfkit import from_file as create_pdf
 locale.setlocale(locale.LC_ALL, '')
 cuerpo_informe = ""
 actual = datetime.now()
-dia_resta = 5
+dia_resta = 3
 dia_inicio = actual-timedelta(days=(dia_resta+6))
 dia_fin = actual-timedelta(days=dia_resta)
 un_minuto = timedelta(minutes=1)
@@ -50,8 +50,9 @@ tamaño_correcto_tupla_sardi_valde = 8
 dia_control = dia_inicio
 un_dia = timedelta(days=1)
 lista_dias = []
+dias_excluir=(1,)
 while dia_control <= dia_fin:
-    if dia_control.weekday() < 5:
+    if dia_control.weekday() < 5 and dia_control.day not in dias_excluir:
         lista_dias.append(dia_control.day)
     dia_control += un_dia
 
@@ -216,6 +217,8 @@ for coche_viaje, rows in groupby(datos_row, lambda fila: (fila[cols.coche],
     sentido = Sentido(*range(2))
     sentido_viaje = ''
     for fila in rows:
+        if fila[cols.instante].day in dias_excluir:
+            continue
         if fila[cols.parada] == paradas.Valdecilla:
             viajes_ordenado[coche_viaje[0]]['Valdecilla_Sardinero'][devuelve_intervalo(fila[cols.instante])][fila[cols.instante].day][coche_viaje[1]
                                                                                                                                       ].append(normaliza_fecha(fila[cols.instante]))
@@ -307,7 +310,7 @@ for coche, valores in viajes_ordenado_filtrado.items():
                         df.plot(x=viaje, y='paradas', ax=ax,
                                 color=color, label=texto_label)
                     for viaje in columnas_opuesto[1:-1]:
-                        texto_label = f"Dia {dia} viaje {columnas_opuesto[0]}"
+                        texto_label = f"Dia {dia} viaje {viaje}"
                         df2.plot(x=viaje, y='paradas', ax=ax2,
                                  color=color, label=texto_label)
 # se crea el dibujo para la vuelta en el otro eje
