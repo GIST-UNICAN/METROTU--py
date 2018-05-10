@@ -358,7 +358,7 @@ for coche, valores in viajes_ordenado_filtrado.items():
             for dia, valores4 in valores3.items():
                 for viaje, valores5 in valores4.items():
                     tv = sorted(valores5)[-1]-sorted(valores5)[0]
-                    v = 3.6*5000/tv.seconds
+                    v = 3.6*4900/tv.seconds
                     df_mean.loc[len(df_mean)] = [
                         sentido, coche, dia, viaje, tv, v]
 # creado el df hay que hacer una pivot table para agregar los datos
