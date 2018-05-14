@@ -29,7 +29,7 @@ from tools.text_and_output import pretty_output
 
 dia_resta = 0
 # generamos el directorio de salvado
-actual = datetime.now()-timedelta(days=1)
+actual = datetime.now()-timedelta(days=3)
 # actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
 # for actual in lista_dias:
@@ -795,8 +795,9 @@ def genera_informe(
             by=['salida']).groupby('linea_real')
 
         # guardamos en csv
+        cwd=os.getcwd()
         df_interc_barrios.to_csv(
-            path_or_buf=R"C:\GITHUB - SYNC\METROTU--py\CSV\{0}-{1}.csv".format(archivo, trayecto))
+            path_or_buf=cwd+r"\CSV\{0}-{1}.csv".format(archivo, trayecto))
         ncols = 1
         nrows = 1  # int(np.ceil(grupo.ngroups/ncols))
 ##        fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
