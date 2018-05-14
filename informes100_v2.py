@@ -371,8 +371,9 @@ pivot_table = pd.pivot_table(df_mean, values=['v_comercial', 'tv_minutes'],
 pivot_table.reset_index(inplace=True)
 pivot_table.columns = columnas_mostrar_final
 pivot_table.sort_values(['coche', 'viaje'], inplace=True)
+cwd=os.getcwd()
 pivot_table.to_csv(
-    path_or_buf=R"C:\GITHUB - SYNC\METROTU--py\CENTRAL-CSV\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
+    path_or_buf=cwd+R"\CENTRAL-CSV\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
                                                                                        dia_inicio.month,
                                                                                        dia_inicio.day,
                                                                                        dia_fin.year,
