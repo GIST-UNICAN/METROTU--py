@@ -39,7 +39,7 @@ from pdfkit import from_file as create_pdf
 locale.setlocale(locale.LC_ALL, '')
 cuerpo_informe = ""
 actual = datetime.now()
-dia_resta = 1
+dia_resta = 3
 dia_inicio = actual-timedelta(days=(dia_resta+6))
 dia_fin = actual-timedelta(days=dia_resta)
 un_minuto = timedelta(minutes=1)
@@ -371,8 +371,9 @@ pivot_table = pd.pivot_table(df_mean, values=['v_comercial', 'tv_minutes'],
 pivot_table.reset_index(inplace=True)
 pivot_table.columns = columnas_mostrar_final
 pivot_table.sort_values(['coche', 'viaje'], inplace=True)
+cwd=os.getcwd()
 pivot_table.to_csv(
-    path_or_buf=R"C:\GITHUB - SYNC\METROTU--py\CENTRAL-CSV\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
+    path_or_buf=cwd+R"\CENTRAL-CSV\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
                                                                                        dia_inicio.month,
                                                                                        dia_inicio.day,
                                                                                        dia_fin.year,
