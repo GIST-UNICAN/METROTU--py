@@ -39,7 +39,7 @@ from pdfkit import from_file as create_pdf
 locale.setlocale(locale.LC_ALL, '')
 cuerpo_informe = ""
 actual = datetime.now()
-dia_resta = 3
+dia_resta = 1
 dia_inicio = actual-timedelta(days=(dia_resta+6))
 dia_fin = actual-timedelta(days=dia_resta)
 un_minuto = timedelta(minutes=1)
