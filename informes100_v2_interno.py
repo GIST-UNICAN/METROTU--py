@@ -43,6 +43,7 @@ dia_resta = 1
 dia_inicio = actual - timedelta(days=(dia_resta + 6))
 dia_fin = actual - timedelta(days=dia_resta)
 un_minuto = timedelta(minutes=1)
+limites_outlayers = (-10, 10)
 
 tamaño_correcto_tupla_valde_sardi = 9
 tamaño_correcto_tupla_sardi_valde = 8
@@ -66,7 +67,7 @@ querie = ("set @fecha_ini='{0}-{1}-{2} 00:00:00'".format(
     dia_fin.year,
     dia_fin.month,
     dia_fin.day),
-    """SELECT ppa.viaje, ppa.coche, ppa.instante, pti.HoraTeorica, pti.Nodo, TIMESTAMPDIFF(second,ppa.instante,pti.HoraTeorica) as diferencia from pasos_teoricos_intercambiadores  pti
+    """SELECT ppa.viaje, ppa.coche, ppa.instante, pti.HoraTeorica, pti.Nodo, TIMESTAMPDIFF(second,pti.HoraTeorica,ppa.instante) as diferencia from pasos_teoricos_intercambiadores  pti
 inner join (Select * from pasos_parada_ajustada where linea=100 and parada in (516,512) and Instante between @fecha_ini and @fecha_fin) ppa
 on ppa.Parada=pti.Nodo and ppa.coche=pti.Coche and ppa.viaje=pti.viaje  and year(ppa.instante)=year(pti.Horateorica) and month(ppa.instante)=month(pti.Horateorica) and day(ppa.instante)=day(pti.Horateorica)
 where HoraTeorica between @fecha_ini and @fecha_fin
@@ -94,6 +95,7 @@ colores = ("b",
 
 intervalos_horarios = (0, 6, 12, 18, 24)
 
+
 def normaliza_fecha(fecha):
     return datetime(2000, 1, 1, fecha.hour, fecha.minute, fecha.second)
 
@@ -104,6 +106,11 @@ def devuelve_intervalo(datetime, intervalos_horarios=intervalos_horarios):
 
 def mes_letra(mes):
     return date(1900, mes, 1).strftime('%B')
+
+
+def formatea_fecha(pandas_datetime):
+    dt = pandas_datetime.to_pydatetime()
+    return datetime.strftime(dt, '%H:%M:%S')
 
 
 Columnas = namedtuple("Columnas",
@@ -142,229 +149,151 @@ with contextlib.closing(MySQLdb.connect(user='root',
         exhaust_map(cursor.execute, querie)
         datos_row = tuple(cursor)
 
-#generamos el diccionario con los viajes y el desvio segun la hora
-diccionario_dia_viajes = defaultdict(lambda: defaultdict(lambda: defaultdict(pd.DataFrame)))
+# generamos el diccionario con los viajes y el desvio segun la hora
+diccionario_dia_viajes = defaultdict(
+    lambda: defaultdict(
+        lambda: defaultdict(
+            pd.DataFrame)))
 for dia_intercambiador, rows in groupby(
         datos_row, lambda fila: (fila[cols.real].day, fila[cols.nodo])):
     for fila in rows:
         if dia_intercambiador[0] in lista_dias:
-            df = pd.DataFrame([list(fila),],columns=columnas)
-            #normalizamos la hora teorica para el pintado
-            df['hora_normalizada']=df['teorica'].apply(normaliza_fecha)
-            df['diferencia']=df['diferencia']/60
-            #se añade al dataframe o se genera un dataframe nuevo para cada intervalo horario
+            df = pd.DataFrame([list(fila), ], columns=columnas)
+            # normalizamos la hora teorica para el pintado
+            df['hora_normalizada'] = df['teorica'].apply(normaliza_fecha)
+            df['diferencia'] = df['diferencia'] / 60
+            # se añade al dataframe o se genera un dataframe nuevo para cada
+            # intervalo horario
             if diccionario_dia_viajes[dia_intercambiador[1]
-                ][devuelve_intervalo(fila[cols.teorica])][dia_intercambiador[0]].shape[0]==0:
+                                      ][devuelve_intervalo(fila[cols.teorica])][dia_intercambiador[0]].shape[0] == 0:
                 diccionario_dia_viajes[dia_intercambiador[1]
-                ][devuelve_intervalo(fila[cols.teorica])][dia_intercambiador[0]]=df
+                                       ][devuelve_intervalo(fila[cols.teorica])][dia_intercambiador[0]] = df
             else:
-                df1=diccionario_dia_viajes[dia_intercambiador[1]
-                ][devuelve_intervalo(fila[cols.teorica])][dia_intercambiador[0]]
-                df2=df1.append(df)
+                df1 = diccionario_dia_viajes[dia_intercambiador[1]
+                                             ][devuelve_intervalo(fila[cols.teorica])][dia_intercambiador[0]]
+                df2 = df1.append(df)
                 diccionario_dia_viajes[dia_intercambiador[1]
-                ][devuelve_intervalo(fila[cols.teorica])][dia_intercambiador[0]]=df2
-                
+                                       ][devuelve_intervalo(fila[cols.teorica])][dia_intercambiador[0]] = df2
 
-#generado un diccionario con el desvio de cada servicio vamos a proceder a pintarlo
-        
 
-# si la parada es alguna de las de las cabeceras vamos a usar la consulta
-# de la otra db
-# for coche_viaje, rows in groupby(datos_row, lambda fila: (fila[cols.coche],
-#                                                          fila[cols.viaje])):
-#    Sentido = namedtuple(
-#        "Sentido", ("Valdecilla_Sardinero", 'Sardinero_Valdecilla'))
-#    sentido = Sentido(*range(2))
-#    sentido_viaje = ''
-#    for fila in rows:
-#        if fila[cols.instante].day in dias_excluir:
-#            continue
-#        if fila[cols.parada] == paradas.Valdecilla:
-#            viajes_ordenado[coche_viaje[0]]['Valdecilla_Sardinero'][devuelve_intervalo(fila[cols.instante])][fila[cols.instante].day][coche_viaje[1]
-#                                                                                                                                      ].append(normaliza_fecha(fila[cols.instante]))
-#            sentido_viaje = sentido.Valdecilla_Sardinero
-#        elif fila[cols.parada] == paradas.Int_Sardinero_1:
-#            viajes_ordenado[coche_viaje[0]]['Sardinero_Valdecilla'][devuelve_intervalo(fila[cols.instante])][fila[cols.instante].day][coche_viaje[1]
-#                                                                                                                                      ].append(normaliza_fecha(fila[cols.instante]))
-#            sentido_viaje = sentido.Sardinero_Valdecilla
-#        elif fila[cols.parada] in paradas_a_sardinero:
-#            viajes_ordenado[coche_viaje[0]]['Valdecilla_Sardinero'][devuelve_intervalo(fila[cols.instante])][fila[cols.instante].day][coche_viaje[1]
-#                                                                                                                                      ].append(normaliza_fecha(fila[cols.instante]))
-#        elif fila[cols.parada] in paradas_a_valdecilla:
-#            viajes_ordenado[coche_viaje[0]]['Sardinero_Valdecilla'][devuelve_intervalo(fila[cols.instante])][fila[cols.instante].day][coche_viaje[1]
-#                                                                                                                                      ].append(normaliza_fecha(fila[cols.instante]))
-# filtro para borrar los malos
-#
-#viajes_ordenado_filtrado = deepcopy(viajes_ordenado)
-#
-# for key, d1 in viajes_ordenado.items():
-#    for sentido, d2 in d1.items():
-#        for grupo_hora, d3 in d2.items():
-#            for dia, d4 in d3.items():
-#                for viaje, lista in d4.items():
-#                    if sentido == 'Valdecilla_Sardinero':
-#                        if filtro_valdecilla_sardinero(lista):
-#                            del viajes_ordenado_filtrado[key][sentido][grupo_hora][dia][viaje]
-#                    elif sentido == 'Sardinero_Valdecilla':
-#                        if filtro_sardinero_valdecilla(lista):
-#                            del viajes_ordenado_filtrado[key][sentido][grupo_hora][dia][viaje]
-#
-#
-# montamos otro diccionario mas cocreto con los distintos df a pintar
-# for coche, valores in viajes_ordenado_filtrado.items():
-#    if coche != 1:
-#        pass
-#    for sentido, valores2 in valores.items():
-#        if sentido == 'Valdecilla_Sardinero':
-#            continue
-#        #        inicia_plot = True
-#        sentido_opuesto = 'Sardinero_Valdecilla' if sentido == 'Valdecilla_Sardinero' else 'Valdecilla_Sardinero'
-#        tamaño = tamaño_correcto_tupla_valde_sardi if sentido == 'Valdecilla_Sardinero' else tamaño_correcto_tupla_sardi_valde
-#        tamaño_opuesto = tamaño_correcto_tupla_sardi_valde if sentido == 'Valdecilla_Sardinero' else tamaño_correcto_tupla_valde_sardi
-#        nombres = paradas_a_sardinero_nombres if sentido == 'Valdecilla_Sardinero' else paradas_a_valdecilla_nombres
-#        nombres_opuesto = paradas_a_valdecilla_nombres if sentido == 'Valdecilla_Sardinero' else paradas_a_sardinero_nombres
-#        distancias = distancia_valdecilla_sardinero if sentido == 'Valdecilla_Sardinero' else distancia_sardinero_valdecilla
-#        distancias_opuesto = distancia_sardinero_valdecilla if sentido == 'Valdecilla_Sardinero' else distancia_valdecilla_sardinero
-#        # hay que dividir los viajes si son muchos para que se pinten en grupos
-#        # más pequeños y se vea mejor
-#        num_grafica = 0
-#        for grupo_hora, valores3 in sorted(
-#                valores2.items(), key=operator.itemgetter(0)):
-#            inicia_plot = True
-#            num_grafica += 1
-#            for dia, valores4 in valores3.items():
-#
-#                df = pd.DataFrame.from_dict(
-#                    viajes_ordenado_filtrado[coche][sentido][grupo_hora][dia], orient='columns', dtype=None)
-#                df2 = pd.DataFrame.from_dict(
-#                    viajes_ordenado_filtrado[coche][sentido_opuesto][grupo_hora][dia], orient='columns', dtype=None)
-#                if df.empty or df2.empty:
-#                    continue
-#                else:
-#
-#                    color = colores[lista_dias.index(dia)]
-#    #                handles.append(str(dia))
-#                    df['paradas'] = distancias
-#                    df2['paradas'] = list(5000 - x for x in distancias_opuesto)
-#                    #df['pasos_parada']=df.apply(tuple, axis=1)
-#                    columnas = list(df.columns.values)
-#                    columnas_opuesto = list(df2.columns.values)
-#        #            ax = df.plot(x=columnas[0], y='paradas',
-#        # label='Viaje {}'.format(str(columnas[0])), figsize=(20, 10))
-#                    if inicia_plot:
-#                        texto_label = f"Dia {dia} viaje {columnas[0]}"
-#                        ax = df.plot(x=columnas[0], y='paradas',
-#                                     color=color, label=texto_label, figsize=(15, 10))
-#                        ax2 = ax.twinx()
-#                        texto_label = f"Dia {dia} viaje {columnas_opuesto[0]}"
-#                        df2.plot(x=columnas_opuesto[0], y='paradas', ax=ax2,
-#                                 color=color, label=texto_label)
-#                        inicia_plot = False
-#                    else:
-#                        texto_label = f"Dia {dia} viaje {columnas[0]}"
-#                        df.plot(x=columnas[0], y='paradas',
-#                                ax=ax, color=color, label=texto_label)
-#                        texto_label = f"Dia {dia} viaje {columnas_opuesto[0]}"
-#                        df2.plot(x=columnas_opuesto[0], y='paradas', ax=ax2,
-#                                 color=color, label=texto_label)
-#                    for viaje in columnas[1:-1]:
-#                        texto_label = f"Dia {dia} viaje {viaje}"
-#                        df.plot(x=viaje, y='paradas', ax=ax,
-#                                color=color, label=texto_label)
-#                    for viaje in columnas_opuesto[1:-1]:
-#                        texto_label = f"Dia {dia} viaje {viaje}"
-#                        df2.plot(x=viaje, y='paradas', ax=ax2,
-#                                 color=color, label=texto_label)
-# se crea el dibujo para la vuelta en el otro eje
-#
-#                    ax.set_yticks(distancias)
-#                    ax.set_yticklabels(nombres)
-#                    ax2.set_yticks(list(5000 - x for x in distancias_opuesto))
-#                    ax2.set_yticklabels(nombres_opuesto)
-#
-#                    titulo = 'Coche {} grafica {}'.format(
-#                        str(coche),
-#                        str(num_grafica))
-#                    ax.set_title(titulo, color='black')
-#                    ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-#                    ax.set_ylim([0, 5000])
-#                    ax2.set_ylim([0, 5000])
-#                    ax.legend(loc='center left', bbox_to_anchor=(1.15, 0.5))
-#                    lgd = ax2.legend(loc='center left',
-#                                     bbox_to_anchor=(1.3, 0.5))
-#                    ax.grid()
-#                    ax2.grid()
-#                    fig = ax.get_figure()
-#                    figura_ruta_relativa = 'coche_{}_grafica_{}.png'.format(
-#                        str(coche),
-#                        str(num_grafica))
-#                    figura_ruta = directorio + figura_ruta_relativa
-#            fig.savefig(
-#                figura_ruta,
-#                bbox_extra_artists=(lgd,), bbox_inches='tight')
-#
-#            cuerpo_informe = "".join((cuerpo_informe,
-#                                      textos_html_informe_100.apartado_informe.format(
-#                                          titulo=titulo,
-#                                          grafico=figura_ruta_relativa)))
-#
+# generado un diccionario con el desvio de cada servicio vamos a proceder
+# a pintarlo
+for cabecera, elementos in diccionario_dia_viajes.items():
+    cabecera_nombre = 'Sardinero' if cabecera == 516 else 'Valdecilla'
+    for grupo_horario, elementos1 in elementos.items():
+        fig, ax = plt.subplots()
+
+        for dia, elementos2 in elementos1.items():
+            df3 = elementos2
+            # se quitan los datos anomalos
+            df3 = df3[(df3.diferencia >= limites_outlayers[0]) &
+                      (df3.diferencia <= limites_outlayers[1])]
+            hora = df3['hora_normalizada'].tolist()
+            hora1 = [x.to_pydatetime() for x in hora]
+            values = df3['diferencia'].tolist()
+            color = colores[lista_dias.index(dia)]
+            ax.plot_date(hora1, values,
+                         label='Día {}'.format(str(dia)), color=color)
+            ax.set_ylim([-10, 10])
+            ax.grid()
+            ax.axhline(0, color='k')
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        titulo = 'Llegadas L. Central a la cabecera {}'.format(cabecera_nombre)
+        fig.suptitle(titulo, fontsize=20)
+        ax.set_xlabel('Hora', fontsize=15)
+        ax.set_ylabel('Adelanto / Retraso (Minutos)', fontsize=15)
+        ax.legend(loc='center left', bbox_to_anchor=(1.15, 0.5))
+        fig.set_size_inches((20, 10))
+        fig.autofmt_xdate()
+        figura_ruta_relativa = 'cabecera_{}_grafica_{}.png'.format(
+            str(cabecera),
+            str(grupo_horario))
+        figura_ruta = directorio + figura_ruta_relativa
+        ax.legend(
+            loc='center left',
+            bbox_to_anchor=(
+                1,
+                0.5),
+            prop={
+                'size': 15})
+        fig.savefig(
+            figura_ruta,
+            bbox_inches='tight')
+        cuerpo_informe = "".join((cuerpo_informe,
+                                  textos_html_informe_100.apartado_informe.format(
+                                      titulo=titulo,
+                                      grafico=figura_ruta_relativa)))
+
 # una vez obtenidas las gráficas habría que sacar unas tablas de
 # desviación media
-#columnas = ['sentido', 'coche', 'dia', 'viaje', 'tv', 'v_comercial']
-# columnas_mostrar_final = ['coche', 'sentido', 'viaje', 'media tiempo viaje (minutos)',
-#                          'media velocidad comercial (km/h)', 'desviación tiempo viaje',
-#                          'desviación velocidad comercial']
-#df_mean = pd.DataFrame(columns=columnas)
-# for coche, valores in viajes_ordenado_filtrado.items():
-#    for sentido, valores2 in valores.items():
-#        for grupo_hora, valores3 in sorted(
-#                valores2.items(), key=operator.itemgetter(0)):
-#            for dia, valores4 in valores3.items():
-#                for viaje, valores5 in valores4.items():
-#                    tv = sorted(valores5)[-1] - sorted(valores5)[0]
-#                    v = 3.6 * 4900 / tv.seconds
-#                    df_mean.loc[len(df_mean)] = [
-#                        sentido, coche, dia, viaje, tv, v]
+columnas = [
+    'Cabecera',
+    'Coche',
+    'Viaje',
+    'Dia',
+    'Diferencia',
+    'Hora_Normalizada']  # , 'Desvio', 'Desvmed']
+columnas_mostrar_final = [
+    'Intercambiador',
+    'Coche',
+    'Viaje',
+    'Hora Llegada Teórica',
+    'Desvio medio (minutos)']
+dic_medias = defaultdict(list)
+df_global = pd.DataFrame(columns=columnas)
+for cabecera, elementos in diccionario_dia_viajes.items():
+    cabecera_nombre = 'Sardinero' if cabecera == 516 else 'Valdecilla'
+    for grupo_horario, elementos1 in elementos.items():
+        for dia, elementos2 in elementos1.items():
+            for coche, viaje, diferencia, hora_normalizada in zip(
+                    elementos2.coche, elementos2.viaje, elementos2.diferencia, elementos2.hora_normalizada):
+                # se filtran los valores fuerw de rango
+                if limites_outlayers[0] <= diferencia <= limites_outlayers[1]:
+                    df_global.loc[len(df_global)] = [
+                        cabecera_nombre, coche, viaje, dia, diferencia, hora_normalizada]
+
 # creado el df hay que hacer una pivot table para agregar los datos
-#
-#df_mean['tv_minutes'] = df_mean['tv'].apply(lambda x: x.seconds / 60)
-#
-# pivot_table = pd.pivot_table(df_mean, values=['v_comercial', 'tv_minutes'],
-#                             index=['coche', 'sentido', 'viaje'],
-#                             aggfunc=[np.mean, np.std])
-# pivot_table.reset_index(inplace=True)
-#pivot_table.columns = columnas_mostrar_final
-#pivot_table.sort_values(['coche', 'viaje'], inplace=True)
-#cwd = os.getcwd()
-# pivot_table.to_csv(
-#    path_or_buf=cwd + R"\CENTRAL-CSV\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
-#                                                                 dia_inicio.month,
-#                                                                 dia_inicio.day,
-#                                                                 dia_fin.year,
-#                                                                 dia_fin.month,
-#                                                                 dia_fin.day))
-# tabla_html = pivot_table.to_html(classes='paleBlueRows',
-#                                 columns=columnas_mostrar_final, index=False,
-#                                 justify='center')
+pivot_table = pd.pivot_table(
+    df_global, values=['Diferencia'], index=[
+        'Cabecera', 'Coche', 'Viaje', 'Hora_Normalizada'], aggfunc=[
+            np.mean])
+pivot_table.reset_index(inplace=True)
+pivot_table.columns = columnas_mostrar_final
+pivot_table.sort_values(by=['Intercambiador', 'Hora Llegada Teórica'], inplace=True)
+cwd = os.getcwd()
+pivot_table.to_csv(
+    path_or_buf=cwd + R"\CENTRAL-CSV-DESVIO\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
+                                                                        dia_inicio.month,
+                                                                        dia_inicio.day,
+                                                                        dia_fin.year,
+                                                                        dia_fin.month,
+                                                                        dia_fin.day))
+
+# para dar formato a la fecha
+formateadores = [None, None, None, formatea_fecha, None]
+tabla_html = pivot_table.to_html(classes='paleBlueRows',
+                                 columns=columnas_mostrar_final, index=False,
+                                 justify='center',
+                                 formatters=formateadores)
 # se añade al cuerpo del informe
-# cuerpo_informe = "".join((cuerpo_informe,
-#                          textos_html_informe_100.apartado_informe_tabla.format(
-#                              tabla=tabla_html)))
-#
+cuerpo_informe = "".join((cuerpo_informe,
+                          textos_html_informe_100.apartado_informe_tabla.format(
+                              tabla=tabla_html)))
+
 # se genera un informe de este tipo
-# with open(directorio + 'informe.html', 'w') as file:
-#    print(textos_html_informe_100.plantilla_web_estilos +
-#          textos_html_informe_100.plantilla_web_cuerpo.format(
-#              dia_inicio=dia_inicio.day,
-#              dia_fin=dia_fin.day,
-#              mes_inicio=mes_letra(dia_inicio.month),
-#              mes_fin=mes_letra(dia_fin.month),
-#              informe_completo=cuerpo_informe), file=file)
-#    create_pdf(
-#        directorio + 'informe.html',
-#        directorio + 'linea_central_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
-#                                                                         dia_inicio.month,
-#                                                                         dia_inicio.day,
-#                                                                         dia_fin.year,
-#                                                                         dia_fin.month,
-# dia_fin.day))
+with open(directorio + 'informe.html', 'w') as file:
+    print(textos_html_informe_100.plantilla_web_estilos +
+          textos_html_informe_100.plantilla_web_cuerpo.format(
+              dia_inicio=dia_inicio.day,
+              dia_fin=dia_fin.day,
+              mes_inicio=mes_letra(dia_inicio.month),
+              mes_fin=mes_letra(dia_fin.month),
+              informe_completo=cuerpo_informe), file=file)
+create_pdf(
+    directorio + 'informe.html',
+    directorio + 'linea_central_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
+                                                                     dia_inicio.month,
+                                                                     dia_inicio.day,
+                                                                     dia_fin.year,
+                                                                     dia_fin.month,
+                                                                     dia_fin.day))
