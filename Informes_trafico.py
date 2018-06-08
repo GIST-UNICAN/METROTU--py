@@ -33,6 +33,7 @@ from tools.general import exhaust_map
 from shutil import copyfile
 import locale
 from pdfkit import from_file as create_pdf
+from scipy.interpolate import interp1d
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -66,7 +67,8 @@ while dia_control <= dia_fin:
 columnas=['n_datos_usados','intensidad', 'ocupacion', 'dia','hora']
 
 # FUNCIONES
-
+def mes_letra(mes):
+    return date(1900, mes, 1).strftime('%B')
 
 # DESCARGA DATOS
 descargas_a_realizar = {(dia_inicio, dia_fin): tuple(zip((espiras_dir_valdecilla, espiras_dir_sardinero, espira_cajo), limite_descarga, nombres)),
@@ -134,11 +136,114 @@ for dias, valores in descargas_a_realizar.items():
                                                 )) as conexion:
             with contextlib.closing(conexion.cursor()) as cursor:
                 exhaust_map(cursor.execute, querie)
-                datos_row[nombre][dia_inicio.year] = pd.DataFrame(list(cursor), columns=columnas)
+                df=pd.DataFrame(list(cursor), columns=columnas)
+                datos_row[nombre][dia_inicio.year] = df
+                
                 print('datos descargados')
                 
+# CREAMOS EL DIRECTORIO
+directorio = "informe_trafico_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
+                                                                            dia_inicio.month,
+                                                                            dia_inicio.day,
+                                                                            dia_fin.year,
+                                                                            dia_fin.month,
+                                                                            dia_fin.day)
+archivo = "{}{}{}".format(actual.year,
+                          actual.month,
+                          actual.day - dia_resta)
+if os.path.exists(directorio):
+    pass
+else:
+    os.mkdir(directorio)
+copyfile('tabla.css', directorio + 'tabla.css')
 # PROCESO DE DATOS
+#aqui vamos a crear para cada uno de los dos sentidos dos gráficos, uno que sea intensidad ocupación y otro agregando los datos de intensidad
+for destino, datos in datos_row.items():
+    fig_int_oc, ax_int_oc = plt.subplots(1,2)
+    fig_int_hor, ax_int_hor = plt.subplots()
+    ax_int_oc_list = ax_int_oc.ravel()
+    n=0
+    for año, dataframe in datos.items():
+        #empezamos con intensidad ocupacion
+        dataframe['intensidad']=dataframe['intensidad'].apply(float)
+        dataframe['ocupacion']=dataframe['ocupacion'].apply(float)
+        dataframe.plot.scatter(y='intensidad',x='ocupacion', ax=ax_int_oc_list[n])
+        ax_int_oc_list[n].set_ylim([0, 1600])
+        ax_int_oc_list[n].set_xlim([0, 35])
+        ax_int_oc_list[n].grid()
+        ax_int_oc_list[n].set_xlabel('Ocupación (%)', fontsize=15)
+        ax_int_oc_list[n].set_ylabel('Intensidad (veh/hora)', fontsize=15)
+        ax_int_oc_list[n].set_title(str(año), fontsize=20)
+        n+=1
+        #hacemos lo propio con los de intensidad horaria
+        pivot_table=pd.pivot_table(dataframe, values = ['intensidad'], index=['hora'], aggfunc=[np.mean])
+        pivot_table.reset_index(inplace=True)
+        pivot_table.columns=['Hora', 'Intensidad']
+        pivot_table_interpolada=pd.DataFrame()
+        #interrpolamos para suaviozar las lineas
+        
+        horas=tuple(range(0,24))
+        f1=interp1d(horas,pivot_table['Intensidad'],kind='cubic')
+        pivot_table_interpolada['intensidad_itp']=f1(horas)
+        pivot_table_interpolada['Hora']=horas
+        pivot_table_interpolada.index=horas
+        pivot_table_interpolada.plot(y='intensidad_itp',x='Hora', ax=ax_int_hor, label=str(año))
+        ax_int_hor.set_xlabel('Hora del día', fontsize=15)
+        ax_int_hor.set_ylabel('Intensidad (veh/hora)', fontsize=15)
+        
+    fig_int_oc.set_size_inches((15, 7))
+    figura_ruta_relativa = 'int_ocup_destino_{}_año_{}.png'.format(
+            str(destino),
+            str(año))
+    figura_ruta = directorio + figura_ruta_relativa
+    fig_int_oc.savefig(figura_ruta)
+    titulo = 'Gráfico Intensidad Ocupación {} 2017 vs 2018'.format(destino)
+    cuerpo_informe = "".join((cuerpo_informe,
+                                  textos_html_informe_100.apartado_informe.format(
+                                      titulo=titulo,
+                                      grafico=figura_ruta_relativa)))
+    #guardamos el otro grafico tambien
+    ax_int_hor.legend(
+            loc='center left',
+            bbox_to_anchor=(
+                1,
+                0.5),
+            prop={
+                'size': 15})
+    fig_int_hor.set_size_inches((15, 7))
+    figura_ruta_relativa = 'int_horaria_destino_{}_año_{}.png'.format(
+            str(destino),
+            str(año))
+    figura_ruta = directorio + figura_ruta_relativa
+    fig_int_hor.savefig(figura_ruta,bbox_inches='tight')
+    titulo = 'Gráfico Intensidad Horaria {} 2017 vs 2018'.format(destino)
+    cuerpo_informe = "".join((cuerpo_informe,
+                                  textos_html_informe_100.apartado_informe.format(
+                                      titulo=titulo,
+                                      grafico=figura_ruta_relativa)))
+    print(destino)
 
-# CONSTRUCCIÓN DEL INFORME
 
 # SALVADO DEL INFORME
+# se añade al cuerpo del informe
+cuerpo_informe = "".join((cuerpo_informe,
+                          textos_html_informe_100.apartado_informe_tabla.format(
+                              tabla='')))
+
+# se genera un informe de este tipo
+with open(directorio + 'informe.html', 'w') as file:
+    print(textos_html_informe_100.plantilla_web_estilos +
+          textos_html_informe_100.plantilla_web_cuerpo.format(
+              dia_inicio=dia_inicio.day,
+              dia_fin=dia_fin.day,
+              mes_inicio=mes_letra(dia_inicio.month),
+              mes_fin=mes_letra(dia_fin.month),
+              informe_completo=cuerpo_informe), file=file)
+create_pdf(
+    directorio + 'informe.html',
+    directorio + 'linea_trafico_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
+                                                                     dia_inicio.month,
+                                                                     dia_inicio.day,
+                                                                     dia_fin.year,
+                                                                     dia_fin.month,
+                                                                     dia_fin.day))
