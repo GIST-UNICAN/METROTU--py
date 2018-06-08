@@ -45,8 +45,7 @@ dia_fin = actual - timedelta(days=dia_resta)
 un_minuto = timedelta(minutes=1)
 limites_outlayers = (-10, 10)
 
-tamaño_correcto_tupla_valde_sardi = 9
-tamaño_correcto_tupla_sardi_valde = 8
+
 
 dia_control = dia_inicio
 un_dia = timedelta(days=1)
@@ -291,7 +290,7 @@ with open(directorio + 'informe.html', 'w') as file:
               informe_completo=cuerpo_informe), file=file)
 create_pdf(
     directorio + 'informe.html',
-    directorio + 'linea_central_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
+    directorio + 'linea_central_desvios_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
                                                                      dia_inicio.month,
                                                                      dia_inicio.day,
                                                                      dia_fin.year,
