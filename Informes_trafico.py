@@ -16,7 +16,7 @@ from itertools import starmap, groupby, chain, repeat
 import pandas as pd
 import numpy as np
 from functools import reduce
-import textos_html_informe_100
+import textos_html_informe_trafico
 import matplotlib
 # matplotlib.use('Agg')
 # import matplotlib.pyplot as plt
