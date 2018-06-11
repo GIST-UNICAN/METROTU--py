@@ -46,7 +46,7 @@ nombres=('Sardinero - Valdecilla', 'Valdecilla - Sardinero', 'Cajo')
 cuerpo_informe = ''
 
 actual = datetime.now()
-dia_resta = 1
+dia_resta = 2
 dia_inicio = actual - timedelta(days=(dia_resta + 6))
 dia_fin = actual - timedelta(days=dia_resta)
 un_minuto = timedelta(minutes=1)
@@ -199,7 +199,7 @@ for destino, datos in datos_row.items():
     fig_int_oc.savefig(figura_ruta)
     titulo = 'Gráfico Intensidad Ocupación {} 2017 vs 2018'.format(destino)
     cuerpo_informe = "".join((cuerpo_informe,
-                                  textos_html_informe_100.apartado_informe.format(
+                                  textos_html_informe_trafico.apartado_informe.format(
                                       titulo=titulo,
                                       grafico=figura_ruta_relativa)))
     #guardamos el otro grafico tambien
@@ -218,7 +218,7 @@ for destino, datos in datos_row.items():
     fig_int_hor.savefig(figura_ruta,bbox_inches='tight')
     titulo = 'Gráfico Intensidad Horaria {} 2017 vs 2018'.format(destino)
     cuerpo_informe = "".join((cuerpo_informe,
-                                  textos_html_informe_100.apartado_informe.format(
+                                  textos_html_informe_trafico.apartado_informe.format(
                                       titulo=titulo,
                                       grafico=figura_ruta_relativa)))
     print(destino)
@@ -227,13 +227,13 @@ for destino, datos in datos_row.items():
 # SALVADO DEL INFORME
 # se añade al cuerpo del informe
 cuerpo_informe = "".join((cuerpo_informe,
-                          textos_html_informe_100.apartado_informe_tabla.format(
+                          textos_html_informe_trafico.apartado_informe_tabla.format(
                               tabla='')))
 
 # se genera un informe de este tipo
 with open(directorio + 'informe.html', 'w') as file:
-    print(textos_html_informe_100.plantilla_web_estilos +
-          textos_html_informe_100.plantilla_web_cuerpo.format(
+    print(textos_html_informe_trafico.plantilla_web_estilos +
+          textos_html_informe_trafico.plantilla_web_cuerpo.format(
               dia_inicio=dia_inicio.day,
               dia_fin=dia_fin.day,
               mes_inicio=mes_letra(dia_inicio.month),

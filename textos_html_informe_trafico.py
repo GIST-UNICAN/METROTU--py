@@ -32,8 +32,6 @@ padding:0cm'><span style='font-size:16.0pt;line-height:106%'>&nbsp;</span></p>
 <p class=MsoNormal align=center style='text-align:center'><span
 style='font-size:16.0pt;line-height:106%'>&nbsp;</span></p>
 
-<p class=MsoNormal align=center style='text-align:center'><b><span
-style='font-size:16.0pt;line-height:106%'>Tabla resumen velocidades y tiempos</span></b></p>
 
 <p class=MsoNormal><span style='font-size:12.0pt;line-height:106%;text-align:center'>{tabla}</span></p>
 
