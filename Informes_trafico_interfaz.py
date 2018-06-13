@@ -35,8 +35,9 @@ import locale
 from pdfkit import from_file as create_pdf
 from scipy.interpolate import interp1d
 import tkinter as tk
+from tkinter import messagebox
 import tkcalendar
-
+datf=None
 top = tk.Tk()
 locale.setlocale(locale.LC_ALL, '')
 list_fechas=list(repeat(None,4))
@@ -46,9 +47,17 @@ labels_fechas_rellenas=list()
 comparativa = tk.IntVar(value=1)
 fines_semana = tk.IntVar()
 
+def mensaje_error(msg):
+    messagebox.showerror('ERROR', msg)
+
 def show_calendar(variable_cambiar):
     def getdate():
         list_fechas[variable_cambiar]=cal.selection_get()
+        if variable_cambiar in (0,2):
+            list_fechas[variable_cambiar]=datetime.combine(cal.selection_get(), datetime.min.time())
+        else: 
+            list_fechas[variable_cambiar]=datetime.combine(cal.selection_get(), datetime.max.time())
+            
         labels_fechas_rellenas[variable_cambiar].configure(text=str(cal.selection_get()))
         win.destroy()
         
@@ -69,6 +78,35 @@ def mostrar_fechas():
     pass
 
 def ejecutar_informe():
+    # hay que sacar todos los datos para llamar a la funcion de generar informe
+    continuar=True
+    try:
+        tupla_espiras=tuple(int(x) for x in entrada.get().split(','))
+    except Exception:
+        continuar=False
+        mensaje_error('El formato de las espiras no es correcto, por favor introduzca números separados por comas')
+    try:
+        titulo_informe=str(titulo.get())
+    except Exception:
+        continuar=False
+        mensaje_error('El título no es correcto')
+    try:
+        if comparativa.get()==1:
+            if list_fechas[1]<list_fechas[0] or list_fechas[3]<list_fechas[2]:
+                mensaje_error('Las no son correctas compruebe que la finalización es posterior al comienzo')
+                continuar=False
+        else:
+             if list_fechas[1]<list_fechas[0]:
+                mensaje_error('Las no son correctas compruebe que la finalización es posterior al')
+                continuar=False
+    except Exception:
+        mensaje_error('Rellene las fechas del informe')
+        continuar=False
+    fs= True if fines_semana.get()==1 else False
+    comp = True if comparativa.get()==1 else False
+    if continuar:
+       informe_espiras(tupla_espiras, list_fechas, titulo_informe, fs, comp) 
+        
     pass
 
 
@@ -81,8 +119,7 @@ for i in range (0,4):
     labels_fechas_rellenas[i].grid(row=i, column=2, padx=1, pady=5)
 entrada=tk.Entry(top,width=30)
 entrada.grid(row=4, column=1, padx=1, pady=5, columnspan=2)
-espiras=tk.Label(top, text="Espiras a comparar (,)")
-espiras.grid(row=4, column=0, padx=1, pady=5)
+tk.Label(top, text="Espiras a comparar (,)").grid(row=4, column=0, padx=1, pady=5)
 
 titulo=tk.Entry(top,width=30)
 titulo.grid(row=5, column=1, padx=1, pady=5, columnspan=2)
@@ -103,19 +140,24 @@ top.mainloop()
 
 
 
-def informe_espiras(espiras, fechas, nombre_titulo):
+def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa):
     # VARIABLES
-    espiras_dir_valdecilla = (2036, 2028, 2046, 2013, 1035)
-    espiras_dir_sardinero = (2035, 2043, 2019, 2075, 1034)
-    espira_cajo = (2002,)
-    limite_descarga = (40000, 40000, 8000) #(7500,7500,1500)
-    nombres=('Sardinero - Valdecilla', 'Valdecilla - Sardinero', 'Cajo')
+    espiras_dir_valdecilla = espiras
+    print(espiras_dir_valdecilla)
+    print(type(fechas))
+    print((fechas[1]-fechas[0]).days)
+    if comparativa:
+        limite_descarga = int(len(espiras_dir_valdecilla)*60*24*max((fechas[1]-fechas[0]).days+1,(fechas[3]-fechas[2]).days+1))
+    else:
+         limite_descarga = int(len(espiras_dir_valdecilla)*60*24*((fechas[1]-fechas[0]).days+1)) #(7500,7500,1500)
+    nombres=nombre_titulo
     cuerpo_informe = ''
     
     actual = datetime.now()
     dia_resta = 2
-    dia_inicio = actual - timedelta(days=(dia_resta + 6))
-    dia_fin = actual - timedelta(days=dia_resta)
+    dia_inicio = fechas[0]
+    
+    dia_fin = fechas[1]
     un_minuto = timedelta(minutes=1)
     dia_control = dia_inicio
     un_dia = timedelta(days=1)
@@ -123,8 +165,13 @@ def informe_espiras(espiras, fechas, nombre_titulo):
     un_año = timedelta(days=366)
     lista_dias = []
     dias_excluir = (100,)
-    dia_inicio_anterior = dia_inicio - un_año
-    dia_fin_anterior = dia_fin - un_año
+    if comparativa:
+        dia_inicio_anterior = fechas[2]
+        dia_fin_anterior = fechas[3]
+        descargas_a_realizar = {(dia_inicio, dia_fin): (espiras_dir_valdecilla, limite_descarga, nombres)}
+    else:
+        descargas_a_realizar = {(dia_inicio, dia_fin): (espiras_dir_valdecilla, limite_descarga, nombres),
+                                (dia_inicio, dia_fin): (espiras_dir_valdecilla, limite_descarga, nombres),}
     while dia_control <= dia_fin:
         # SE EXCLUYEN LOS FINES DE SEMANA
         if dia_control.weekday() < 5 and dia_control.day not in dias_excluir:
@@ -138,76 +185,78 @@ def informe_espiras(espiras, fechas, nombre_titulo):
         return date(1900, mes, 1).strftime('%B')
     
     # DESCARGA DATOS
-    descargas_a_realizar = {(dia_inicio, dia_fin): tuple(zip((espiras_dir_valdecilla, espiras_dir_sardinero, espira_cajo), limite_descarga, nombres)),
-                            (dia_inicio_anterior, dia_fin_anterior): tuple(zip((espiras_dir_valdecilla, espiras_dir_sardinero, espira_cajo), limite_descarga, nombres))}
+    
     datos_row=defaultdict(lambda: defaultdict(pd.DataFrame))
     for dias, valores in descargas_a_realizar.items():
+        query_fines_semana=" and weekday(fecha) not  in (6,5)" if fines_semana  else ""
         dia_inicio = dias[0]
+        print(dia_inicio)
+        print(dias)
         dia_fin = dias[1]
-        for espiras, limite, nombre in valores:
-            espiras= espiras if len(espiras)>1 else f'({espiras[0]})'
-            querie = ("set @fecha_ini='{}-{}-{} 00:00:00'".format(dia_inicio.year,
-                                                                  dia_inicio.month,
-                                                                  dia_inicio.day),
-                      "set @fecha_fin = '{}-{}-{} 23:59:59'".format(dia_fin.year,
-                                                                    dia_fin.month,
-                                                                    dia_fin.day),
-                      """SELECT
-                                
-                            	count(intensidad) as datos_usados,
-                                AVG(intensidad) AS intensidad_media,
-                                AVG(ocupacion) AS ocupacion_media,
-                                weekday(fecha) as dia,
-                                HOUR(fecha) AS hora
-                            FROM
-                                            (SELECT
-                                           intensidad,
-                                           ocupacion,
-                                           fecha,
-                                           espira
-                                 FROM
-                                    (SELECT
-                                        intensidad,
-                                        ocupacion,
-                                        fecha,
-                                           espira
-                                    FROM
-                                        lecturas_espiras
-                                        FORCE INDEX (fecha, espira)
-                                    WHERE
-                                        fecha > @fecha_ini
-                                        and
-                                        weekday(fecha) not  in (6,5)
-                                        and
-                                        espira in  {}
-                                    ORDER BY
-                                        fecha
-                                    ASC
-                                    LIMIT
-                                        {}
-                                    )
-                                corte_inferior
-                                            WHERE
-                                           fecha < @fecha_fin)
-                                            corte_temporal_completo
-                            WHERE
-                                            1=1
-                            GROUP BY
-                                            dia,Hora""".format(espiras, limite))
-            
-            with contextlib.closing(MySQLdb.connect(user='root',
-                                                    password='madremia902',
-                                                    host='193.144.208.142',
-                                                    port=3306,
-                                                    database='Trafico_Santander'
-                                                    )) as conexion:
-                with contextlib.closing(conexion.cursor()) as cursor:
-                    exhaust_map(cursor.execute, querie)
-                    df=pd.DataFrame(list(cursor), columns=columnas)
-                    datos_row[nombre][dia_inicio.year] = df
-                    
-                    print('datos descargados')
-                    
+        espiras=valores[0]
+        limite=valores[1]
+        nombre=valores[2]
+        espiras= espiras if len(espiras)>1 else f'({espiras[0]})'
+        querie = ("set @fecha_ini='{}-{}-{} 00:00:00'".format(dia_inicio.year,
+                                                              dia_inicio.month,
+                                                              dia_inicio.day),
+                  "set @fecha_fin = '{}-{}-{} 23:59:59'".format(dia_fin.year,
+                                                                dia_fin.month,
+                                                                dia_fin.day),
+                  """SELECT
+                            
+                        	count(intensidad) as datos_usados,
+                            AVG(intensidad) AS intensidad_media,
+                            AVG(ocupacion) AS ocupacion_media,
+                            weekday(fecha) as dia,
+                            HOUR(fecha) AS hora
+                        FROM
+                                        (SELECT
+                                       intensidad,
+                                       ocupacion,
+                                       fecha,
+                                       espira
+                             FROM
+                                (SELECT
+                                    intensidad,
+                                    ocupacion,
+                                    fecha,
+                                       espira
+                                FROM
+                                    lecturas_espiras
+                                    FORCE INDEX (fecha, espira)
+                                WHERE
+                                    fecha > @fecha_ini
+                                    {}
+                                    and
+                                    espira in  {}
+                                ORDER BY
+                                    fecha
+                                ASC
+                                LIMIT
+                                    {}
+                                )
+                            corte_inferior
+                                        WHERE
+                                       fecha < @fecha_fin)
+                                        corte_temporal_completo
+                        WHERE
+                                        1=1
+                        GROUP BY
+                                        dia,Hora""".format(query_fines_semana,espiras, limite))
+        
+        with contextlib.closing(MySQLdb.connect(user='root',
+                                                password='madremia902',
+                                                host='193.144.208.142',
+                                                port=3306,
+                                                database='Trafico_Santander'
+                                                )) as conexion:
+            with contextlib.closing(conexion.cursor()) as cursor:
+                exhaust_map(cursor.execute, querie)
+                df=pd.DataFrame(list(cursor), columns=columnas)
+                datos_row[nombre][dia_inicio.year] = df
+                print('datos descargados')
+
     # CREAMOS EL DIRECTORIO
     directorio = "informe_trafico_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
                                                                                 dia_inicio.month,
@@ -226,9 +275,10 @@ def informe_espiras(espiras, fechas, nombre_titulo):
     # PROCESO DE DATOS
     #aqui vamos a crear para cada uno de los dos sentidos dos gráficos, uno que sea intensidad ocupación y otro agregando los datos de intensidad
     for destino, datos in datos_row.items():
-        fig_int_oc, ax_int_oc = plt.subplots(1,2)
+        fig_int_oc, ax_int_oc = plt.subplots(1,2) if comparativa else plt.subplots(1,1)
         fig_int_hor, ax_int_hor = plt.subplots()
-        ax_int_oc_list = ax_int_oc.ravel()
+        
+        ax_int_oc_list = ax_int_oc.ravel() if comparativa else (ax_int_oc,)
         n=0
         for año, dataframe in datos.items():
             #empezamos con intensidad ocupacion
@@ -264,7 +314,7 @@ def informe_espiras(espiras, fechas, nombre_titulo):
                 str(año))
         figura_ruta = directorio + figura_ruta_relativa
         fig_int_oc.savefig(figura_ruta)
-        titulo = 'Gráfico Intensidad Ocupación {} 2017 vs 2018'.format(destino)
+        titulo = 'Gráfico Intensidad Ocupación'
         cuerpo_informe = "".join((cuerpo_informe,
                                       textos_html_informe_trafico.apartado_informe.format(
                                           titulo=titulo,
@@ -308,7 +358,7 @@ def informe_espiras(espiras, fechas, nombre_titulo):
                   informe_completo=cuerpo_informe), file=file)
     create_pdf(
         directorio + 'informe.html',
-        directorio + 'linea_trafico_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
+        directorio + 'trafico_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
                                                                          dia_inicio.month,
                                                                          dia_inicio.day,
                                                                          dia_fin.year,
