@@ -36,11 +36,20 @@ from pdfkit import from_file as create_pdf
 from scipy.interpolate import interp1d
 import tkinter as tk
 import tkcalendar
+
+top = tk.Tk()
 locale.setlocale(locale.LC_ALL, '')
+list_fechas=list(repeat(None,4))
+list_botones=list()
+label_fechas=("Fecha inicial comparativa","Fecha final comparativa","Fecha inicia fin comparativa","Fecha final fin comparativa")
+labels_fechas_rellenas=list()
+comparativa = tk.IntVar(value=1)
+fines_semana = tk.IntVar()
 
 def show_calendar(variable_cambiar):
     def getdate():
-        cal.selection_get()
+        list_fechas[variable_cambiar]=cal.selection_get()
+        labels_fechas_rellenas[variable_cambiar].configure(text=str(cal.selection_get()))
         win.destroy()
         
     win=tk.Toplevel(top)
@@ -49,25 +58,43 @@ def show_calendar(variable_cambiar):
     cal.grid(row=0)
     tk.Button(win,text='ok', command=lambda: getdate()).grid(row=2)
 
+def mostrar_fechas():
+    if comparativa.get()==0:
+        for j in range(2,4):
+            list_botones[j].config(state="disabled")
+    else:
+        for j in range(2,4):
+            list_botones[j].config(state="normal")
+        
+    pass
+
+def ejecutar_informe():
+    pass
 
 
-top = tk.Tk()
-tk.Label(top, text="Fecha inicial comparativa").grid(row=0, column=0, padx=1, pady=1)
-tk.Label(top, text="Fecha final comparativa").grid(row=1, column=0, padx=1, pady=1)
-tk.Label(top, text="Fecha inicia fin comparativa").grid(row=2, column=0, padx=1, pady=1)
-tk.Label(top, text="Fecha final fin comparativa").grid(row=3, column=0, padx=1, pady=1)
+top.columnconfigure((0,1,2,3), weight=1)
+for i in range (0,4):
+    tk.Label(top, text=label_fechas[i]).grid(row=i, column=0, padx=2, pady=5)
+    list_botones.append(tk.Button(top,text='seleccionar', command=lambda i=i: show_calendar(i)))
+    list_botones[i].grid(row=i, column=1)
+    labels_fechas_rellenas.append(tk.Label(top, text=""))
+    labels_fechas_rellenas[i].grid(row=i, column=2, padx=1, pady=5)
+entrada=tk.Entry(top,width=30)
+entrada.grid(row=4, column=1, padx=1, pady=5, columnspan=2)
+espiras=tk.Label(top, text="Espiras a comparar (,)")
+espiras.grid(row=4, column=0, padx=1, pady=5)
 
-tk.Button(top,text='fecha', command=lambda: show_calendar()).grid(row=0, column=1)
-fecha_desde_1=tk.Label(top, text="")
-fecha_desde_1.grid(row=0, column=3, padx=1, pady=1)
-fecha_hasta_1=tk.Label(top, text="")
-fecha_hasta_1.grid(row=1, column=3, padx=1, pady=1)
-fecha_desde_2=tk.Label(top, text="")
-fecha_desde_2.grid(row=2, column=3, padx=1, pady=1)
-fecha_hasta_2=tk.Label(top, text="")
-fecha_hasta_2.grid(row=3, column=3, padx=1, pady=1)
-espiras=tk.Label(top, text="Espiras a comparar")
-espiras.grid(row=4, column=0, padx=1, pady=1, columnspan=3)
+titulo=tk.Entry(top,width=30)
+titulo.grid(row=5, column=1, padx=1, pady=5, columnspan=2)
+tk.Label(top, text="Título del informe").grid(row=5, column=0, padx=1, pady=5)
+
+
+tk.Checkbutton(top, text='¿Fines de semana?', variable=fines_semana).grid(row=6, column=0, padx=1, pady=5)
+
+tk.Checkbutton(top, text="¿Hacer comparativa?", variable=comparativa, command=mostrar_fechas).grid(row=7, column=0, padx=1, pady=5)
+
+tk.Button(top, text='Ejecutar', command=ejecutar_informe,width=30).grid(row=8, column=0, padx=1, pady=5, columnspan=3)
+
 top.mainloop()
 
 
@@ -76,7 +103,7 @@ top.mainloop()
 
 
 
-def informe_espiras():
+def informe_espiras(espiras, fechas, nombre_titulo):
     # VARIABLES
     espiras_dir_valdecilla = (2036, 2028, 2046, 2013, 1035)
     espiras_dir_sardinero = (2035, 2043, 2019, 2075, 1034)
