@@ -36,6 +36,7 @@ from pdfkit import from_file as create_pdf
 from scipy.interpolate import interp1d
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 import tkcalendar
 datf=None
 top = tk.Tk()
@@ -47,6 +48,13 @@ labels_fechas_rellenas=list()
 comparativa = tk.IntVar(value=1)
 fines_semana = tk.IntVar()
 info_intro_espiras='Para obtener datos agregados introducir espiras separadas por comas \n ejemplo 1001,1002... \n para Obtener datos por separado introducir nombre: espira1,espira2; \n ejemplo Paseo Pereda: 1001,1002,1003; San Fernando: 1006; Los Ciruelos:1005,1008'  
+text_ruta=tk.StringVar()
+directorio_salvar=None
+
+def abrir_directorio():
+    global directorio_salvar
+    directorio_salvar=filedialog.askdirectory()
+    text_ruta.set(directorio_salvar)
 
 def mensaje_error(msg):
     messagebox.showerror('ERROR', msg)
@@ -118,14 +126,17 @@ def ejecutar_informe():
     except Exception:
         mensaje_error('Rellene las fechas del informe')
         continuar=False
+    if directorio_salvar==None or label_ruta.get()=='':
+        continuar=False
+        mensaje_error('Introducir un directorio válido')
     fs= True if fines_semana.get()==1 else False
     comp = True if comparativa.get()==1 else False
     if continuar:
-       informe_espiras(tupla_espiras, list_fechas, titulo_informe, fs, comp,espiras_agrupadas) 
+       informe_espiras(tupla_espiras, list_fechas, titulo_informe, fs, comp,espiras_agrupadas,directorio_salvar) 
     win.destroy()
     pass
 
-def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, espiras_agrupadas):
+def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, espiras_agrupadas,directorio_salvar):
     # VARIABLES
     
     if not espiras_agrupadas:
@@ -200,7 +211,7 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
                         	count(intensidad) as datos_usados,
                             AVG(intensidad) AS intensidad_media,
                             AVG(ocupacion) AS ocupacion_media,
-                            weekday(fecha) as dia,
+                            DAY(fecha) as dia,
                             HOUR(fecha) AS hora
                         FROM
                                         (SELECT
@@ -250,12 +261,13 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
                     print('datos descargados')
 
     # CREAMOS EL DIRECTORIO
-    directorio = "informe_trafico_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
+    directorio = "{}\\informe_trafico_de_{}{}{}_a_{}{}{}\\".format(directorio_salvar,dia_inicio.year,
                                                                                 dia_inicio.month,
                                                                                 dia_inicio.day,
                                                                                 dia_fin.year,
                                                                                 dia_fin.month,
-                                                                                dia_fin.day)
+                                                                               dia_fin.day)
+    directorio_excel=directorio+'Archivos excel\\' 
     archivo = "{}{}{}".format(actual.year,
                               actual.month,
                               actual.day - dia_resta)
@@ -263,8 +275,15 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
         pass
     else:
         os.mkdir(directorio)
+    
+    if os.path.exists(directorio_excel):
+        pass
+    else:
+        os.mkdir(directorio_excel)
     copyfile('tabla.css', directorio + 'tabla.css')
     # PROCESO DE DATOS
+    #writer para el archivo excel generado
+    writer = pd.ExcelWriter(directorio_excel+'informe_excel.xlsx')
     #aqui vamos a crear para cada uno de los dos sentidos dos gráficos, uno que sea intensidad ocupación y otro agregando los datos de intensidad
     for destino, datos in datos_row.items():
         fig_int_oc, ax_int_oc = plt.subplots(1,2) if comparativa else plt.subplots(1,1)
@@ -279,8 +298,8 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
             dataframe['intensidad']=dataframe['intensidad'].apply(float)
             dataframe['ocupacion']=dataframe['ocupacion'].apply(float)
             dataframe.plot.scatter(y='intensidad',x='ocupacion', ax=ax_int_oc_list[n])
-            ax_int_oc_list[n].set_ylim([0, 1600])
-            ax_int_oc_list[n].set_xlim([0, 35])
+            ax_int_oc_list[n].set_ylim([0, 3000])
+            ax_int_oc_list[n].set_xlim([0, 100])
             ax_int_oc_list[n].grid()
             ax_int_oc_list[n].set_xlabel('Ocupación (%)', fontsize=15)
             ax_int_oc_list[n].set_ylabel('Intensidad (veh/hora)', fontsize=15)
@@ -294,7 +313,11 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
             pivot_table.plot(y='Intensidad',x='Hora', ax=ax_int_hor, label=label)
             ax_int_hor.set_xlabel('Hora del día', fontsize=15)
             ax_int_hor.set_ylabel('Intensidad (veh/hora)', fontsize=15)
-            
+            #guardamos los datos en excel que exportamos
+    
+            dataframe.to_excel(writer,'INTENSIDAD-OCUPACION {} de {} a {}'.format(destino, format_date(año[0]),format_date(año[1])))
+            pivot_table.to_excel(writer,'INTENSIDAD HORARIA {} de {} a {}'.format(destino, format_date(año[0]),format_date(año[1])))
+   
         fig_int_oc.set_size_inches((15, 7))
         figura_ruta_relativa = 'int_ocup_destino_{}_año_{}.png'.format(
                 str(destino),
@@ -329,6 +352,7 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
     
     
     # SALVADO DEL INFORME
+    writer.save() # el excel
     # se añade al cuerpo del informe
     cuerpo_informe = "".join((cuerpo_informe,
                               textos_html_informe_trafico.apartado_informe_tabla.format(
@@ -373,11 +397,18 @@ titulo.grid(row=5, column=1, padx=1, pady=5, columnspan=2)
 tk.Label(top, text="Título del informe").grid(row=5, column=0, padx=1, pady=5)
 
 
-tk.Checkbutton(top, text='¿Fines de semana?', variable=fines_semana).grid(row=6, column=0, padx=1, pady=5)
+tk.Checkbutton(top, text='Marcar para incluir fines de semana', variable=fines_semana).grid(row=6, column=0, padx=1, pady=5)
 
 tk.Checkbutton(top, text="¿Hacer comparativa?", variable=comparativa, command=mostrar_fechas).grid(row=7, column=0, padx=1, pady=5)
 
-tk.Button(top, text='Ejecutar', command=ejecutar_informe,width=30).grid(row=8, column=0, padx=1, pady=5, columnspan=3)
+tk.Label(top,text='Salvar en: ').grid(row=8, column=0, padx=1, pady=5)
+
+tk.Button(top,text='..', command=abrir_directorio).grid(sticky="E",row=8, column=0, padx=1, pady=5)
+
+label_ruta=tk.Entry(top, textvariable=text_ruta,width=30)
+label_ruta.grid(row=8, column=1, padx=1, pady=5, columnspan=2)
+
+tk.Button(top, text='Ejecutar', command=ejecutar_informe,width=30).grid(row=9, column=0, padx=1, pady=5, columnspan=3)
 
 
 top.mainloop()
