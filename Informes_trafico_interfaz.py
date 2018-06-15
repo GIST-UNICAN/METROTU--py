@@ -18,7 +18,7 @@ import numpy as np
 from functools import reduce
 import textos_html_informe_trafico
 import matplotlib
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 # import matplotlib.pyplot as plt
 from shutil import copyfile
 from pdfkit import from_file as create_pdf
@@ -33,7 +33,6 @@ from tools.general import exhaust_map
 from shutil import copyfile
 import locale
 from pdfkit import from_file as create_pdf
-from scipy.interpolate import interp1d
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
