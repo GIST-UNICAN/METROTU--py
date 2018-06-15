@@ -48,13 +48,14 @@ comparativa = tk.IntVar(value=1)
 fines_semana = tk.IntVar()
 info_intro_espiras='Para obtener datos agregados introducir espiras separadas por comas \n ejemplo 1001,1002... \n para Obtener datos por separado introducir nombre: espira1,espira2; \n ejemplo Paseo Pereda: 1001,1002,1003; San Fernando: 1006; Los Ciruelos:1005,1008'  
 
-
 def mensaje_error(msg):
     messagebox.showerror('ERROR', msg)
 
 def mensaje_info(msg=info_intro_espiras):
-    messagebox.showinfo('INFO', msg)
-    
+    messagebox.showinfo('INFO', msg).grid(row=0)
+
+
+   
 def show_calendar(variable_cambiar):
     def getdate():
         list_fechas[variable_cambiar]=cal.selection_get()
@@ -64,13 +65,14 @@ def show_calendar(variable_cambiar):
             list_fechas[variable_cambiar]=datetime.combine(cal.selection_get(), datetime.max.time())
             
         labels_fechas_rellenas[variable_cambiar].configure(text=str(cal.selection_get()))
-        win.destroy()
+        w.destroy()
         
-    win=tk.Toplevel(top)
-    win.wm_title('Elegir fecha')
-    cal=tkcalendar.Calendar(win)
+    w=tk.Toplevel(top)
+    w.resizable(False, False)
+    w.wm_title('Elegir fecha')
+    cal=tkcalendar.Calendar(w)
     cal.grid(row=0)
-    tk.Button(win,text='ok', command=lambda: getdate()).grid(row=2)
+    tk.Button(w,text='ok', command=lambda: getdate()).grid(row=2)
 
 def mostrar_fechas():
     if comparativa.get()==0:
@@ -84,11 +86,13 @@ def mostrar_fechas():
 def format_date(dt):
     return datetime.strftime(dt,'%d-%m-%Y')
 def ejecutar_informe():
+    win=tk.Toplevel(top)
+    tk.Label(win, text='ELABORANDO INFORME...')
     # hay que sacar todos los datos para llamar a la funcion de generar informe
     continuar=True
     espiras_agrupadas=False
     try:
-        tupla_espiras=tuple((x.lstrip(), tuple(int(a) for a in y.split(','))) for x,y in tuple(x.split(':') for x in a))
+        tupla_espiras=tuple((x.lstrip(),tuple(int(a) for a in y.split(',')))for x,y in tuple(x.split(':') for x in tuple(x for x in entrada.get().split(';'))))
         espiras_agrupadas=True
     except Exception:
         #si no son varias probamos con que solo quiera una espira sin agregar
@@ -117,31 +121,27 @@ def ejecutar_informe():
     fs= True if fines_semana.get()==1 else False
     comp = True if comparativa.get()==1 else False
     if continuar:
-       informe_espiras(tupla_espiras, list_fechas, titulo_informe, fs, comp) 
-        
+       informe_espiras(tupla_espiras, list_fechas, titulo_informe, fs, comp,espiras_agrupadas) 
+    win.destroy()
     pass
 
 def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, espiras_agrupadas):
     # VARIABLES
-    if not espi
+    
+    if not espiras_agrupadas:
+        espiras=(('',espiras),)
+    print(espiras)    
     nombres=list()
     espiras_dir_valdecilla=list()
     limite_descarga=list()
-    for elemento in espiras
-    if espiras_agrupadas:
-        nombres,
-        espiras_dir_valdecilla
-        limite_descarga
-    else:
-        espiras
-    espiras_dir_valdecilla = espiras
-    if comparativa:
-        limite_descarga = int(len(espiras_dir_valdecilla)*60*24*max((fechas[1]-fechas[0]).days+1,(fechas[3]-fechas[2]).days+1))
-    else:
-         limite_descarga = int(len(espiras_dir_valdecilla)*60*24*((fechas[1]-fechas[0]).days+1)) #(7500,7500,1500)
-         
-    print(limite_descarga)
-    nombres=nombre_titulo
+    for elemento in espiras:
+       nombres.append(elemento[0])
+       espiras_dir_valdecilla.append(elemento[1])
+       if comparativa:
+           limite_descarga.append(int(len(espiras_dir_valdecilla)*60*24*max((fechas[1]-fechas[0]).days+1,(fechas[3]-fechas[2]).days+1)))
+       else:
+           limite_descarga.append(int(len(espiras_dir_valdecilla)*60*24*((fechas[1]-fechas[0]).days+1)))
+    
     cuerpo_informe = ''
     
     actual = datetime.now()
@@ -159,11 +159,11 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
     if comparativa:
         dia_inicio_anterior = fechas[2]
         dia_fin_anterior = fechas[3]
-        descargas_a_realizar = {(dia_inicio, dia_fin): (espiras_dir_valdecilla, limite_descarga, nombres),
-                                (dia_inicio_anterior, dia_fin_anterior): (espiras_dir_valdecilla, limite_descarga, nombres)}
-       
+        descargas_a_realizar = {(dia_inicio, dia_fin): tuple(zip(espiras_dir_valdecilla, limite_descarga, nombres)),
+                        (dia_inicio_anterior, dia_fin_anterior): tuple(zip(espiras_dir_valdecilla, limite_descarga, nombres))}
+          
     else:
-         descargas_a_realizar = {(dia_inicio, dia_fin): (espiras_dir_valdecilla, limite_descarga, nombres)}
+         descargas_a_realizar = {(dia_inicio, dia_fin): tuple(zip(espiras_dir_valdecilla, limite_descarga, nombres))}
     while dia_control <= dia_fin:
         # SE EXCLUYEN LOS FINES DE SEMANA
         if dia_control.weekday() < 5 and dia_control.day not in dias_excluir:
@@ -179,15 +179,17 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
     # DESCARGA DATOS
     
     datos_row=defaultdict(lambda: defaultdict(pd.DataFrame))
+    
     for dias, valores in descargas_a_realizar.items():
-        query_fines_semana=" and weekday(fecha) not  in (6,5)" if fines_semana  else ""
+        print(valores)
         dia_inicio = dias[0]
         dia_fin = dias[1]
-        espiras=valores[0]
-        limite=valores[1]
-        nombre=valores[2]
-        espiras= espiras if len(espiras)>1 else f'({espiras[0]})'
-        querie = ("set @fecha_ini='{}-{}-{} 00:00:00'".format(dia_inicio.year,
+        for espiras, limite, nombre in valores:
+            print(espiras,limite,nombre)
+            espiras= espiras if len(espiras)>1 else f'({espiras[0]})'
+    
+            query_fines_semana=" and weekday(fecha) not  in (6,5)" if fines_semana  else ""
+            querie = ("set @fecha_ini='{}-{}-{} 00:00:00'".format(dia_inicio.year,
                                                               dia_inicio.month,
                                                               dia_inicio.day),
                   "set @fecha_fin = '{}-{}-{} 23:59:59'".format(dia_fin.year,
@@ -235,17 +237,17 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
                         GROUP BY
                                         dia,Hora""".format(query_fines_semana,espiras, limite))
         
-        with contextlib.closing(MySQLdb.connect(user='root',
-                                                password='madremia902',
-                                                host='193.144.208.142',
-                                                port=3306,
-                                                database='Trafico_Santander'
-                                                )) as conexion:
-            with contextlib.closing(conexion.cursor()) as cursor:
-                exhaust_map(cursor.execute, querie)
-                df=pd.DataFrame(list(cursor), columns=columnas)
-                datos_row[nombre][(dia_inicio, dia_fin)] = df
-                print('datos descargados')
+            with contextlib.closing(MySQLdb.connect(user='root',
+                                                    password='madremia902',
+                                                    host='193.144.208.142',
+                                                    port=3306,
+                                                    database='Trafico_Santander'
+                                                    )) as conexion:
+                with contextlib.closing(conexion.cursor()) as cursor:
+                    exhaust_map(cursor.execute, querie)
+                    df=pd.DataFrame(list(cursor), columns=columnas)
+                    datos_row[nombre][(dia_inicio, dia_fin)] = df
+                    print('datos descargados')
 
     # CREAMOS EL DIRECTORIO
     directorio = "informe_trafico_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
@@ -299,7 +301,7 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
                 str(año))
         figura_ruta = directorio + figura_ruta_relativa
         fig_int_oc.savefig(figura_ruta)
-        titulo = 'Gráfico Intensidad Ocupación'
+        titulo = 'Gráfico Intensidad Ocupación {}'.format(str(destino))
         cuerpo_informe = "".join((cuerpo_informe,
                                       textos_html_informe_trafico.apartado_informe.format(
                                           titulo=titulo,
@@ -318,7 +320,7 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
                 str(año))
         figura_ruta = directorio + figura_ruta_relativa
         fig_int_hor.savefig(figura_ruta,bbox_inches='tight')
-        titulo = 'Gráfico Intensidad Horaria'
+        titulo = 'Gráfico Intensidad Horaria {}'.format(str(destino))
         cuerpo_informe = "".join((cuerpo_informe,
                                       textos_html_informe_trafico.apartado_informe.format(
                                           titulo=titulo,
@@ -349,7 +351,13 @@ def informe_espiras(espiras, fechas, nombre_titulo, fines_semana, comparativa, e
                                                                          dia_fin.year,
                                                                          dia_fin.month,
                                                                          dia_fin.day))
+    
+    
+    
 top.columnconfigure((0,1,2,3), weight=1)
+top.resizable(False, False)
+top.wm_title('STV')
+top.wm_iconbitmap('favicon.ico')
 for i in range (0,4):
     tk.Label(top, text=label_fechas[i]).grid(row=i, column=0, padx=2, pady=5)
     list_botones.append(tk.Button(top,text='seleccionar', command=lambda i=i: show_calendar(i)))
