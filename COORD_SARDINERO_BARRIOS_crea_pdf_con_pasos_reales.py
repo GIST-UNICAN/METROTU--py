@@ -213,7 +213,7 @@ def genera_informe(
                "Coche, Viaje "
                "FROM `pasos_parada_ajustada` "
                "WHERE Instante between '{0}' AND '{1}' "
-               "and ( (linea=3 and sublinea =2) or (linea=17 and sublinea in (3,4,5,6) ) "
+               "and ( (linea=3 and sublinea =20) or (linea=17 and sublinea in (3,4,5,6) ) "
                "or (linea=8 and sublinea =1) or(linea=9 and sublinea =2)  ))".format(fecha_inicio,
                                                                                      fecha_fin),
                "SELECT * FROM pasos_utiles "
@@ -593,7 +593,7 @@ def genera_informe(
                                      outlayers_time='15 minutes',
                                      tiempo_no_valido="30 minutes",
                                      direccion_centro=False,
-                                     cortes={3: (8, 14, 20),
+                                     cortes={#3: (8, 14, 20),
                                              17: (8, 14,),
                                              8: (8, 14,),
                                              9: (8, 14,)},
