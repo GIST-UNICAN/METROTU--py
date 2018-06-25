@@ -73,7 +73,7 @@ where HoraTeorica between @fecha_ini and @fecha_fin
 order by pti.Nodo,pti.HoraTeorica asc""")
 
 
-directorio = "informe_lcentral_medias_llegadas_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
+directorio = "informe_l3_medias_llegadas_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
                                                                             dia_inicio.month,
                                                                             dia_inicio.day,
                                                                             dia_fin.year,
@@ -198,7 +198,7 @@ for cabecera, elementos in diccionario_dia_viajes.items():
             ax.grid()
             ax.axhline(0, color='k')
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        titulo = 'Llegadas L. Central a la cabecera {}'.format(cabecera_nombre)
+        titulo = 'Llegadas L. 3 a la cabecera {}'.format(cabecera_nombre)
         fig.suptitle(titulo, fontsize=20)
         ax.set_xlabel('Hora', fontsize=15)
         ax.set_ylabel('Adelanto / Retraso (Minutos)', fontsize=15)
@@ -291,7 +291,7 @@ with open(directorio + 'informe.html', 'w') as file:
               informe_completo=cuerpo_informe), file=file)
 create_pdf(
     directorio + 'informe.html',
-    directorio + 'linea_central_desvios_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
+    directorio + 'linea_3_desvios_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
                                                                      dia_inicio.month,
                                                                      dia_inicio.day,
                                                                      dia_fin.year,
