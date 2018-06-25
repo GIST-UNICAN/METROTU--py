@@ -67,7 +67,7 @@ querie = ("set @fecha_ini='{0}-{1}-{2} 00:00:00'".format(
     dia_fin.month,
     dia_fin.day),
     """SELECT ppa.viaje, ppa.coche, ppa.instante, pti.HoraTeorica, pti.Nodo, TIMESTAMPDIFF(second,pti.HoraTeorica,ppa.instante) as diferencia from pasos_teoricos_intercambiadores  pti
-inner join (Select * from pasos_parada_ajustada where linea=100 and parada in (516,512) and Instante between @fecha_ini and @fecha_fin) ppa
+inner join (Select * from pasos_parada_ajustada where linea=3 and parada =509 and Instante between @fecha_ini and @fecha_fin) ppa
 on ppa.Parada=pti.Nodo and ppa.coche=pti.Coche and ppa.viaje=pti.viaje  and year(ppa.instante)=year(pti.Horateorica) and month(ppa.instante)=month(pti.Horateorica) and day(ppa.instante)=day(pti.Horateorica)
 where HoraTeorica between @fecha_ini and @fecha_fin
 order by pti.Nodo,pti.HoraTeorica asc""")
