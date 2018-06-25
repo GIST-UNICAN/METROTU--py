@@ -66,13 +66,13 @@ querie = ("set @fecha_ini='{0}-{1}-{2} 00:00:00'".format(
     dia_fin.month,
     dia_fin.day),
     """SELECT ppa.viaje, ppa.coche, ppa.instante, pti.HoraTeorica, pti.Nodo, TIMESTAMPDIFF(second,pti.HoraTeorica,ppa.instante) as diferencia from pasos_teoricos_intercambiadores  pti
-inner join (Select * from pasos_parada_ajustada where linea=3 and parada =509 and Instante between @fecha_ini and @fecha_fin) ppa
+inner join (Select * from pasos_parada_ajustada where linea=17 and parada =509 and Instante between @fecha_ini and @fecha_fin) ppa
 on ppa.Parada=pti.Nodo and ppa.coche=pti.Coche and ppa.viaje=pti.viaje  and year(ppa.instante)=year(pti.Horateorica) and month(ppa.instante)=month(pti.Horateorica) and day(ppa.instante)=day(pti.Horateorica)
 where HoraTeorica between @fecha_ini and @fecha_fin
 order by pti.Nodo,pti.HoraTeorica asc""")
 
 
-directorio = "informe_l3_medias_llegadas_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
+directorio = "informe_l17_medias_llegadas_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
                                                                       dia_inicio.month,
                                                                       dia_inicio.day,
                                                                       dia_fin.year,
@@ -177,7 +177,7 @@ for dia_intercambiador, rows in groupby(
 # generado un diccionario con el desvio de cada servicio vamos a proceder
 # a pintarlo
 for cabecera, elementos in diccionario_dia_viajes.items():
-    cabecera_nombre = 'Sardinero' if cabecera == 516 else 'Valdecilla'
+    cabecera_nombre = 'Sardinero' if cabecera == 511 else 'Valdecilla'
     for grupo_horario, elementos1 in elementos.items():
         fig, ax = plt.subplots()
 
@@ -197,7 +197,7 @@ for cabecera, elementos in diccionario_dia_viajes.items():
             ax.grid()
             ax.axhline(0, color='k')
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        titulo = 'Llegadas L. 3 a la cabecera {}'.format(cabecera_nombre)
+        titulo = 'Llegadas L. 17 a la cabecera {}'.format(cabecera_nombre)
         fig.suptitle(titulo, fontsize=20)
         ax.set_xlabel('Hora', fontsize=15)
         ax.set_ylabel('Adelanto / Retraso (Minutos)', fontsize=15)
@@ -241,7 +241,7 @@ columnas_mostrar_final = [
 dic_medias = defaultdict(list)
 df_global = pd.DataFrame(columns=columnas)
 for cabecera, elementos in diccionario_dia_viajes.items():
-    cabecera_nombre = 'Sardinero' if cabecera == 516 else 'Valdecilla'
+    cabecera_nombre = 'Sardinero' if cabecera == 511 else 'Valdecilla'
     for grupo_horario, elementos1 in elementos.items():
         for dia, elementos2 in elementos1.items():
             for coche, viaje, diferencia, hora_normalizada in zip(
@@ -252,6 +252,7 @@ for cabecera, elementos in diccionario_dia_viajes.items():
                         cabecera_nombre, coche, viaje, dia, diferencia, hora_normalizada]
 
 # creado el df hay que hacer una pivot table para agregar los datos
+df_global['Diferencia']=df_global['Diferencia'].apply(float)                    
 pivot_table = pd.pivot_table(
     df_global, values=['Diferencia'], index=[
         'Cabecera', 'Coche', 'Viaje', 'Hora_Normalizada'], aggfunc=[
@@ -262,7 +263,7 @@ pivot_table.sort_values(
     by=['Intercambiador', 'Hora Llegada Teórica'], inplace=True)
 cwd = os.getcwd()
 pivot_table.to_csv(
-    path_or_buf=cwd + R"\3-CSV-DESVIO\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
+    path_or_buf=cwd + R"\17-CSV-DESVIO\{}{}{}_a_{}{}{}.csv".format(dia_inicio.year,
                                                                         dia_inicio.month,
                                                                         dia_inicio.day,
                                                                         dia_fin.year,
@@ -289,11 +290,11 @@ with open(directorio + 'informe.html', 'w') as file:
             mes_fin=mes_letra(dia_fin.month),
             informe_completo=cuerpo_informe)
 
-    texto = texto.replace('CENTRAL', '3')
+    texto = texto.replace('CENTRAL', '17')
     print(texto, file=file)
 create_pdf(
     directorio + 'informe.html',
-    directorio + 'linea_3_desvios_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
+    directorio + 'linea_17_desvios_del_{}-{}-{}_al_{}-{}-{}.pdf'.format(dia_inicio.year,
                                                                        dia_inicio.month,
                                                                        dia_inicio.day,
                                                                        dia_fin.year,
