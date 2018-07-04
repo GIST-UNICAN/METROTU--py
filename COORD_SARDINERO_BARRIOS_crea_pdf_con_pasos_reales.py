@@ -31,7 +31,7 @@ from tools.text_and_output import pretty_output
 
 dia_resta = 0
 # generamos el directorio de salvado
-actual = datetime.now()-timedelta(days=3)
+actual = datetime.now()-timedelta(days=120)
 # actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
 # for actual in lista_dias:
@@ -213,7 +213,7 @@ def genera_informe(
                "Coche, Viaje "
                "FROM `pasos_parada_ajustada` "
                "WHERE Instante between '{0}' AND '{1}' "
-               "and ( (linea=3 and sublinea =20) or (linea=17 and sublinea in (3,4,5,6) ) "
+               "and ( (linea=3 and sublinea in (1,2,3,4,5,6,7,8,9,20)) or (linea=17 and sublinea in (3,4,5,6) ) "
                "or (linea=8 and sublinea =1) or(linea=9 and sublinea =2)  ))".format(fecha_inicio,
                                                                                      fecha_fin),
                "SELECT * FROM pasos_utiles "
@@ -795,6 +795,8 @@ def genera_informe(
             for item in df_interc_barrios['salida']]
         grupo = df_interc_barrios.sort_values(
             by=['salida']).groupby('linea_real')
+        #guardamos en bd
+        
 
         # guardamos en csv
         cwd=os.getcwd()
