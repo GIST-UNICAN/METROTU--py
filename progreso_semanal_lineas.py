@@ -25,9 +25,10 @@ lista_archivos = defaultdict(list)
 recorridos = ("Barrios_Sardinero", "Sardinero_barrios", "Barrios_Valdecilla",
               "Valdecilla_barrios")
 lista_df = dict()
-lineas = (3, 8, 9, 13, 14, 17, 20)
+lineas = (8, 9, 13, 14, 17, 20)#(3, 8, 9, 13, 14, 17, 20)
 
-cortes = {3: (8, 14, 20), 17: (8, 14), 8: (8, 14), 9: (8, 14)}
+cortes = {17: (8, 14), 8: (8, 14), 9: (8, 14)}#{3: (8, 14, 20), 17: (8, 14), 8: (8, 14), 9: (8, 14)}
+
 
 cuerpo_informe = ""
 

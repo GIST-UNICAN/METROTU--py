@@ -25,9 +25,9 @@ lista_archivos = defaultdict(list)
 recorridos = ("Barrios_Sardinero", "Sardinero_barrios", "Barrios_Valdecilla",
               "Valdecilla_barrios")
 lista_df = dict()
-lineas = (3, 8, 9, 13, 14, 17, 20)
+lineas = (8, 9, 13, 14, 17, 20)#(3, 8, 9, 13, 14, 17, 20)
 
-cortes = {3: (8, 14, 20), 17: (8, 14), 8: (8, 14), 9: (8, 14)}
+cortes = {17: (8, 14), 8: (8, 14), 9: (8, 14)}#{3: (8, 14, 20), 17: (8, 14), 8: (8, 14), 9: (8, 14)}
 
 cuerpo_informe = ""
 
@@ -71,8 +71,10 @@ for nombre in recorridos:
     for dia in lista_dias:
         dia_desde = int(
                 "".join((str(dia.year), str(dia.month), str(dia.day))))
+        print (dia_desde,nombre)
         lista_archivos[nombre].append(
             *glob.glob('.\CSV\{0}-{1}.csv'.format(dia_desde, nombre)))
+        
     lista_df_sentido = list()
     for file in lista_archivos[nombre]:
         df = pd.read_csv(file)
