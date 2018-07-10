@@ -31,11 +31,9 @@ from tools.text_and_output import pretty_output
 
 dia_resta = 0
 # generamos el directorio de salvado
-<<<<<<< HEAD:INFORME_NORMAL.py
-actual = datetime.now()-timedelta(days=5)
-=======
+#<<<<<<< HEAD:INFORME_NORMAL.py
 actual = datetime.now()-timedelta(days=1)
->>>>>>> 18864bbd8d7735769ed552a5e1487140836faba5:COORD_SARDINERO_BARRIOS_crea_pdf_con_pasos_reales.py
+actual = datetime.now()-timedelta(days=1)
 # actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
 # for actual in lista_dias:
