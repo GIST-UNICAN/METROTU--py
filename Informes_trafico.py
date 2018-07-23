@@ -41,22 +41,22 @@ locale.setlocale(locale.LC_ALL, '')
 espiras_dir_valdecilla = (2036, 2028, 2046, 2013, 1035)
 espiras_dir_sardinero = (2035, 2043, 2019, 2075, 1034)
 espira_cajo = (2002,)
-<<<<<<< HEAD
+# <<<<<<< HEAD
 limite_descarga = (40000,40000,8000)#(40000, 40000, 8000) #(7500,7500,1500)
-=======
+#=======
 limite_descarga = (400000,400000,80000)#(40000, 40000, 8000) #(7500,7500,1500)
->>>>>>> 18864bbd8d7735769ed552a5e1487140836faba5
+# >>>>>>> 18864bbd8d7735769ed552a5e1487140836faba5
 nombres=('Sardinero - Valdecilla', 'Valdecilla - Sardinero', 'Cajo')
 cuerpo_informe = ''
 
 actual = datetime.now()
-<<<<<<< HEAD
+# <<<<<<< HEAD
 dia_resta = 3
 dia_inicio = actual - timedelta(days=(dia_resta + 5))
-=======
-dia_resta = 86
-dia_inicio = actual - timedelta(days=(dia_resta + 55))
->>>>>>> 18864bbd8d7735769ed552a5e1487140836faba5
+# =======
+#dia_resta = 86
+#dia_inicio = actual - timedelta(days=(dia_resta + 55))
+# >>>>>>> 18864bbd8d7735769ed552a5e1487140836faba5
 dia_fin = actual - timedelta(days=dia_resta)
 print(dia_inicio)
 print(dia_fin)

@@ -29,7 +29,7 @@ from tools.text_and_output import pretty_output
 
 dia_resta = 0
 # generamos el directorio de salvado
-actual = datetime.now()-timedelta(days=1)
+actual = datetime.now()-timedelta(days=2)
 # actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
 # for actual in lista_dias:
@@ -935,6 +935,9 @@ def genera_informe(
                                    tablas,
                                    titulos,
                                    nombres_fotos)))))
+    print(directorio+"informe{}{}{}_bis.html", directorio+"informe{}{}{}_bis.html".format(actual.year,
+                                                         actual.month,
+                                                         actual.day-dia_resta))
     with open(directorio+'informe{}{}{}_bis.html'.format(actual.year,
                                                          actual.month,
                                                          actual.day-dia_resta),
