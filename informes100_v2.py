@@ -50,7 +50,7 @@ tamaño_correcto_tupla_sardi_valde = 8
 dia_control = dia_inicio
 un_dia = timedelta(days=1)
 lista_dias = []
-dias_excluir=(100,)
+dias_excluir=(25,)
 while dia_control <= dia_fin:
     if dia_control.weekday() < 5 and dia_control.day not in dias_excluir:
         lista_dias.append(dia_control.day)
@@ -271,15 +271,19 @@ for coche, valores in viajes_ordenado_filtrado.items():
             inicia_plot = True
             num_grafica += 1
             for dia, valores4 in valores3.items():
-
+#                print("dia y valores4", dia, valores4)
                 df = pd.DataFrame.from_dict(
                     viajes_ordenado_filtrado[coche][sentido][grupo_hora][dia], orient='columns', dtype=None)
                 df2 = pd.DataFrame.from_dict(
                     viajes_ordenado_filtrado[coche][sentido_opuesto][grupo_hora][dia], orient='columns', dtype=None)
                 if df.empty or df2.empty:
+                    if df.empty:
+                        print("DF vacío")
+                    if df2.empty:
+                        print("DF2 vacío")
                     continue
                 else:
-
+#                    print("###########DF NO VACÍO#########")
                     color = colores[lista_dias.index(dia)]
     #                handles.append(str(dia))
                     df['paradas'] = distancias
