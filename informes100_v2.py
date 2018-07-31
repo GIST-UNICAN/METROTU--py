@@ -39,7 +39,7 @@ from pdfkit import from_file as create_pdf
 locale.setlocale(locale.LC_ALL, '')
 cuerpo_informe = ""
 actual = datetime.now()
-dia_resta = 3
+dia_resta = 2
 dia_inicio = actual-timedelta(days=(dia_resta+6))
 dia_fin = actual-timedelta(days=dia_resta)
 un_minuto = timedelta(minutes=1)
@@ -223,7 +223,7 @@ for coche_viaje, rows in groupby(datos_row, lambda fila: (fila[cols.coche],
     sentido = Sentido(*range(2))
     sentido_viaje = ''
     for fila in rows:
-        print("fila", fila)
+#        print("fila", fila)
         if fila[cols.instante].day in dias_excluir:
             continue
         if fila[cols.parada] == paradas.Valdecilla:
@@ -350,14 +350,17 @@ for coche, valores in viajes_ordenado_filtrado.items():
                         str(coche),
                         str(num_grafica))
                     figura_ruta = directorio+figura_ruta_relativa
-            fig.savefig(
-                figura_ruta,
-                bbox_extra_artists=(lgd,), bbox_inches='tight')
-
-            cuerpo_informe = "".join((cuerpo_informe,
-                                      textos_html_informe_100.apartado_informe.format(
-                                          titulo=titulo,
-                                          grafico=figura_ruta_relativa)))
+            try:
+                fig.savefig(
+                    figura_ruta,
+                    bbox_extra_artists=(lgd,), bbox_inches='tight')
+            except NameError:
+                print(f"No hay figura para grupo_hora {grupo_hora}.")
+            else:
+                cuerpo_informe = "".join((cuerpo_informe,
+                                          textos_html_informe_100.apartado_informe.format(
+                                              titulo=titulo,
+                                              grafico=figura_ruta_relativa)))
 
 # una vez obtenidas las gráficas habría que sacar unas tablas de desviación media
 columnas = ['sentido', 'coche', 'dia', 'viaje', 'tv', 'v_comercial']
