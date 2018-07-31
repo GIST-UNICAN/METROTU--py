@@ -206,8 +206,14 @@ Columnas = namedtuple("Columnas",
                        "instante"))
 cols = Columnas(*range(4))
 
-viajes_ordenado = defaultdict(lambda: defaultdict(
-    lambda:  defaultdict(lambda: defaultdict(lambda: defaultdict(list)))))
+# viajes_ordenado[coche][sentido][intervalo][dia][viaje] = [instante_0,
+#                                                           instante_1...]
+viajes_ordenado = defaultdict(
+        lambda: defaultdict(
+                lambda: defaultdict(
+                        lambda: defaultdict(
+                                lambda: defaultdict(
+                                        list)))))
 
 # si la parada es alguna de las de las cabeceras vamos a usar la consulta de la otra db
 for coche_viaje, rows in groupby(datos_row, lambda fila: (fila[cols.coche],
@@ -217,6 +223,7 @@ for coche_viaje, rows in groupby(datos_row, lambda fila: (fila[cols.coche],
     sentido = Sentido(*range(2))
     sentido_viaje = ''
     for fila in rows:
+        print("fila", fila)
         if fila[cols.instante].day in dias_excluir:
             continue
         if fila[cols.parada] == paradas.Valdecilla:
@@ -252,8 +259,8 @@ for key, d1 in viajes_ordenado.items():
 
 # montamos otro diccionario mas cocreto con los distintos df a pintar
 for coche, valores in viajes_ordenado_filtrado.items():
-    if coche != 1:
-        pass
+#    if coche != 1:
+#        pass
     for sentido, valores2 in valores.items():
         if sentido == 'Valdecilla_Sardinero':
             continue
@@ -277,6 +284,8 @@ for coche, valores in viajes_ordenado_filtrado.items():
                 df2 = pd.DataFrame.from_dict(
                     viajes_ordenado_filtrado[coche][sentido_opuesto][grupo_hora][dia], orient='columns', dtype=None)
                 if df.empty or df2.empty:
+                    print("Sentido", sentido)
+                    print("Sentido_opuesto", sentido_opuesto)
                     if df.empty:
                         print("DF vacío")
                     if df2.empty:
