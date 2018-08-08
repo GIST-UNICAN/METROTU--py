@@ -50,7 +50,7 @@ limites_outlayers = (-10, 10)
 dia_control = dia_inicio
 un_dia = timedelta(days=1)
 lista_dias = []
-dias_excluir = (25,)
+dias_excluir = (250,)
 while dia_control <= dia_fin:
     if dia_control.weekday() < 5 and dia_control.day not in dias_excluir:
         lista_dias.append(dia_control.day)
