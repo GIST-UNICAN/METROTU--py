@@ -29,7 +29,7 @@ from tools.text_and_output import pretty_output
 
 
 
-dia_resta = 0
+dia_resta = 3
 # generamos el directorio de salvado
 #<<<<<<< HEAD:INFORME_NORMAL.py
 actual = datetime.now()-timedelta(days=1)
