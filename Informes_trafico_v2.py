@@ -52,15 +52,15 @@ cuerpo_informe = ''
 actual = datetime.now()
 # <<<<<<< HEAD
 #dia_resta = 3
-dia_resta = "Informe_julio_2017"
+dia_resta = "Informe_agosto_semana_1"
 #dia_inicio = actual - timedelta(days=(dia_resta + 5))3
-dia_inicio = datetime.strptime("2018-07-01 00:00:00", "%Y-%m-%d %H:%M:%S")
+dia_inicio = datetime.strptime("2018-08-01 12:00:00", "%Y-%m-%d %H:%M:%S")
 # =======
 #dia_resta = 86
 #dia_inicio = actual - timedelta(days=(dia_resta + 55))
 # >>>>>>> 18864bbd8d7735769ed552a5e1487140836faba5
 #dia_fin = actual - timedelta(days=dia_resta)
-dia_fin = datetime.strptime("2018-07-13 23:59:59", "%Y-%m-%d %H:%M:%S")
+dia_fin = datetime.strptime("2018-08-05 12:00:00", "%Y-%m-%d %H:%M:%S")
 print(dia_inicio)
 print(dia_fin)
 input('continuar')
@@ -163,9 +163,9 @@ directorio = "informe_trafico_de_{}{}{}_a_{}{}{}\\".format(dia_inicio.year,
                                                                             dia_fin.year,
                                                                             dia_fin.month,
                                                                             dia_fin.day)
-archivo = "{}{}{}".format(actual.year,
-                          actual.month,
-                          dia_resta)
+#archivo = "{}{}{}".format(actual.year,
+#                          actual.month,
+#                          dia_resta)
 if os.path.exists(directorio):
     pass
 else:
