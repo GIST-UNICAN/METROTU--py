@@ -35,7 +35,7 @@ actual = datetime.now()
 dia_resta = 3
 dia_inicio = actual-timedelta(days=(dia_resta+6))
 dia_fin = actual-timedelta(days=dia_resta)
-dia_excluir = (250,)
+dia_excluir = (15,)
 un_minuto = timedelta(minutes=1)
 dia_primero = int(
     "".join((str(dia_inicio.year), str(dia_inicio.month), str(dia_inicio.day))))
