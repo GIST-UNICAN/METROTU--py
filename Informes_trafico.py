@@ -51,7 +51,7 @@ cuerpo_informe = ''
 
 actual = datetime.now()
 # <<<<<<< HEAD
-dia_resta = 3
+dia_resta = 9
 dia_inicio = actual - timedelta(days=(dia_resta + 5))
 # =======
 #dia_resta = 86
