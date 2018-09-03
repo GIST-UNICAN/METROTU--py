@@ -29,16 +29,14 @@ from tools.text_and_output import pretty_output
 
 
 
-dia_resta = 1
+dia_resta = 0
 # generamos el directorio de salvado
-#<<<<<<< HEAD:INFORME_NORMAL.py
-<<<<<<< HEAD
+#<<<<<<< HEAD:INFORME_NORMAL.py HEAD
 actual = datetime.now()-timedelta(days=3)
-=======
+
 actual = datetime.now()-timedelta(days=1)
 actual = datetime.now()-timedelta(days=3)
 
->>>>>>> c5901a33cf2882db667bcdf5e84cbfeb5c597e08
 # actual = datetime.now()-timedelta(days=2)
 # actual_aux=actual-timedelta(days=1)
 ##lista_dias=(actual_aux-timedelta(days=day) for day in range(25,28) )
