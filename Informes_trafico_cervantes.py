@@ -169,6 +169,7 @@ for dias, valores in descargas_a_realizar.items():
 directorio = "informe_cervantes_de_{}{}{}\\".format(dia_inicio.year,
                                                     dia_inicio.month,
                                                     dia_inicio.day)
+print(directorio)
 # archivo = "{}{}{}".format(actual.year,
 #                          actual.month,
 #                          dia_resta)
@@ -191,6 +192,7 @@ for destino, datos in datos_row.items():
         for año, dataframe in datos.items():
             # empezamos con intensidad ocupacion
             dataframe['intensidad'] = dataframe['intensidad'].apply(float)
+            dataframe['intensidad'] = dataframe['intensidad'] / 60
             dataframe['ocupacion'] = dataframe['ocupacion'].apply(float)
             dataframe.plot.scatter(
                 y='intensidad',

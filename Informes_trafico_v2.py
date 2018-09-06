@@ -54,13 +54,13 @@ actual = datetime.now()
 #dia_resta = 3
 dia_resta = "Informe_agosto_semana_1"
 #dia_inicio = actual - timedelta(days=(dia_resta + 5))3
-dia_inicio = datetime.strptime("2018-07-01 00:00:00", "%Y-%m-%d %H:%M:%S")
+dia_inicio = datetime.strptime("2018-08-01 00:00:00", "%Y-%m-%d %H:%M:%S")
 # =======
 #dia_resta = 86
 #dia_inicio = actual - timedelta(days=(dia_resta + 55))
 # >>>>>>> 18864bbd8d7735769ed552a5e1487140836faba5
 #dia_fin = actual - timedelta(days=dia_resta)
-dia_fin = datetime.strptime("2018-07-31 23:59:59", "%Y-%m-%d %H:%M:%S")
+dia_fin = datetime.strptime("2018-08-31 23:59:59", "%Y-%m-%d %H:%M:%S")
 print(dia_inicio)
 print(dia_fin)
 input('continuar')
@@ -70,7 +70,7 @@ un_dia = timedelta(days=1)
 # esto seria recomendable cambiarlo cuando hay bisisestos
 un_año = timedelta(days=366)
 lista_dias = []
-dias_excluir = (25,28,)
+dias_excluir = (15,)
 dia_inicio_anterior = dia_inicio - un_año
 dia_fin_anterior = dia_fin - un_año
 while dia_control <= dia_fin:
