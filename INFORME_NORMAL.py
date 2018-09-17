@@ -32,7 +32,11 @@ from tools.text_and_output import pretty_output
 dia_resta = 0
 # generamos el directorio de salvado
 
+<<<<<<< HEAD
 actual = datetime.now()-timedelta(days=3)
+=======
+actual = datetime.now()-timedelta(days=7)
+>>>>>>> ac09a1e3c2e3316a1d933f670d6d7ef7ec4641bd
 
 # actual = datetime.now()-timedelta(days=2)
 # actual_aux=actual-timedelta(days=1)
