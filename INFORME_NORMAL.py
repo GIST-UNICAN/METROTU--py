@@ -28,11 +28,10 @@ from tools.general import exhaust_map, create_objects
 from tools.text_and_output import pretty_output
 
 
-
 dia_resta = 0
 # generamos el directorio de salvado
 
-actual = datetime.now()-timedelta(days=1)
+actual = datetime.now()-timedelta(days=3)
 
 
 # actual = datetime.now()-timedelta(days=2)
